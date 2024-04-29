@@ -13,7 +13,7 @@ var geometry, material, mesh;
 
 var front_camera, lat_camera, top_camera;
 
-var fixed_ort_camera, fixed_perp_camera, moving_camera;
+var fixed_ort_camera, fixed_persp_camera, moving_camera;
 
 var shown_camera;
 
@@ -31,67 +31,58 @@ function createScene() {
     ///////////////////
     /* Criar objetos */
     ///////////////////
+    createCrane(0,0,0);
 }
 
 //////////////////////
 /* CREATE CAMERA(S) */
 //////////////////////
-function createFrontCamera() {
+function createFrontCamera() {              //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    front_camera = new THREE.OrthographicCamera(-(window.innerWidth / window.innerHeight),
-                                                (window.innerWidth / window.innerHeight),
-                                                1,
-                                                -1,
-                                                0.1,
-                                                1000);
-    front_camera.position.set(0, 0, 50);
+    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 25,
+                                                window.innerWidth / 25,
+                                                window.innerHeight / 25,
+                                                -window.innerHeight / 25);
+    front_camera.position.set(0, 0, 100);
     front_camera.lookAt(scene.position);
 }
 
-function createLatCamera() {
+function createLatCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    lat_camera = new THREE.OrthographicCamera(-(window.innerWidth / window.innerHeight),
-                                              (window.innerWidth / window.innerHeight),
-                                              1,
-                                              -1,
-                                              0.1,
-                                              1000);
-    lat_camera.position.set(50, 0, 0);
+    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 25,
+                                              window.innerWidth / 25,
+                                              window.innerHeight / 25,
+                                              -window.innerHeight / 25);
+    lat_camera.position.set(100, 0, 0);
     lat_camera.lookAt(scene.position);
 }
 
-function createTopCamera() {
+function createTopCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    top_camera = new THREE.OrthographicCamera(-(window.innerWidth / window.innerHeight),
-                                              (window.innerWidth / window.innerHeight),
-                                              1,
-                                              -1,
-                                              0.1,
-                                              1000);
-    top_camera.position.set(0, 120, 0);
+    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 80,
+                                              window.innerWidth / 80,
+                                              window.innerHeight / 80,
+                                              -window.innerHeight / 80);
+    top_camera.position.set(0, 200, 0);
     top_camera.lookAt(scene.position);
 }
 
-function createFixedOrthographicCamera() {
+function createFixedOrthographicCamera() {  //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_ort_camera = new THREE.OrthographicCamera(-(window.innerWidth / window.innerHeight),
-                                                    (window.innerWidth / window.innerHeight),
-                                                    1,
-                                                    -1,
-                                                    0.1,
-                                                    1000);
-    fixed_ort_camera.position.set(50, 20, 50);
+    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 25,
+                                                    window.innerWidth / 25,
+                                                    window.innerHeight / 25,
+                                                    -window.innerHeight / 25);
+    fixed_ort_camera.position.set(100, 0, 100);
     fixed_ort_camera.lookAt(scene.position);
 }
 
-function createFixedPrespectiveCamera() {
+function createFixedPerspectiveCamera() {   //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_perp_camera = new THREE.PerspectiveCamera(-(window.innerWidth / window.innerHeight)*10,
-                                                    (window.innerWidth / window.innerHeight)*10,
-                                                    10,
-                                                    1000);
-    fixed_perp_camera.position.set(50, 20, 50);
-    fixed_perp_camera.lookAt(scene.position);
+    fixed_persp_camera = new THREE.PerspectiveCamera(32,
+                                                    (window.innerWidth / window.innerHeight));
+    fixed_persp_camera.position.set(100, 0, 100);
+    fixed_persp_camera.lookAt(scene.position);
 }
 
 function createMovingCamera() {
@@ -104,9 +95,9 @@ function createAllCameras() {
     createLatCamera();
     createTopCamera();
     createFixedOrthographicCamera();
-    createFixedPrespectiveCamera();
+    createFixedPerspectiveCamera();
     //createMovingCamera();
-    cameras.push(front_camera, lat_camera, top_camera, fixed_ort_camera, fixed_perp_camera);
+    cameras.push(front_camera, lat_camera, top_camera, fixed_ort_camera, fixed_persp_camera);
 }
 
 //////////////////////
@@ -138,7 +129,7 @@ function addLowerTower(obj, x, y, z) {
 
     geometry = new THREE.BoxGeometry(3, 20, 3);
     mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y + (6/2) + (20/2), z);
+    mesh.position.set(x, y + (5/2) + (20/2), z);
     obj.add(mesh);
 }
 
@@ -146,34 +137,72 @@ function addLowerTower(obj, x, y, z) {
 function addTurntable(obj, x, y, z) {
     'use strict';
 
-    geometry = new THREE.BoxGeometry(3.2, 2, 3.2);
+    geometry = new THREE.CylinderGeometry(2.1, 2.1, 2, 15);
     mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y + 26, z);
+    mesh.position.set(x, y + (5/2) + (20) + (2/2), z);
     obj.add(mesh);
-}
+}   
 
 /** Torre Superior */
 function addUpperTower(obj, x, y, z) {
+    'use strict';
+
+    geometry = new THREE.BoxGeometry(3, 5, 3);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y + (5/2) + (20) + (2) + (5/2), z);
+    obj.add(mesh);
 }
 
 /** Cabine */
 function addCabin(obj, x, y, z) {
+    'use strict';
+
+    geometry = new THREE.BoxGeometry(2, 3, 2);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y + (5/2) + (20) + (2) + (5/2), z + (5/2));
+    obj.add(mesh);
 }
 
 /** Lança */
 function addJib(obj, x, y, z) {
+    'use strict';
+
+    geometry = new THREE.CylinderGeometry(1.6, 1.6, 15, 3);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.z = Math.PI / 2;
+    mesh.rotation.x = - Math.PI / 2;
+    mesh.position.set(x + (3/2) + (15/2), y + (5/2) + (20) + (2) + (5) + (1.6/2), z);
+    obj.add(mesh);
 }
 
 /** Contra-Lança */
 function addCounterJib(obj, x, y, z) {
+    'use strict';
+
+    geometry = new THREE.BoxGeometry(10, 2, 3);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(-(x + (3/2) + (10/2)), y + (5/2) + (20) + (2) + (5) + (2/2), z);
+    obj.add(mesh);
 }
 
 /** Contrapeso */
 function addCounterWeight(obj, x, y, z) {
-}
+    'use strict';
+
+    geometry = new THREE.BoxGeometry(3, 5, 3);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(-(x + (3/2) + (10/2) + (3/2)), y + (5/2) + (20) + (2) + (5) + (1.6/2) - (0.5), z);
+    obj.add(mesh);
+}23
 
 /** Porta-Lança */
 function addTowerPeak(obj, x, y, z) {
+    'use strict';
+
+    geometry = new THREE.ConeGeometry(1.6, 8, 4);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y + (8/2) + (20) + (2) + (5) + (5/2), z);
+    obj.add(mesh);
 }
 
 /** Tirante da Lança */
@@ -205,21 +234,29 @@ function createCrane(x, y, z) {
 
     var crane = new THREE.Object3D();
 
+    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+
     addBase(crane, 0, 0, 0);
     addLowerTower(crane, 0, 0, 0);
     addTurntable(crane, 0, 0, 0);
-    /* addUpperTower(crane, 0, 0, 0);
-    addCabin(crane, 0, 0, 0);
+    addUpperTower(crane, 0, 0, 0);
+    addCabin(crane, 0, 0, 0); 
     addJib(crane, 0, 0, 0);
     addCounterJib(crane, 0, 0, 0);
     addCounterWeight(crane, 0, 0, 0);
     addTowerPeak(crane, 0, 0, 0);
-    addLoadLineJ(crane, 0, 0, 0);
-    addLoadLineCJ(crane, 0, 0, 0);
-    addTrolley(crane, 0, 0, 0);
-    addCable(crane, 0, 0, 0);
-    addHookBlock(crane, 0, 0, 0);
-    createClaw(crane, 0, 0, 0); */
+    //addLoadLineJ(crane, 0, 0, 0);
+    //addLoadLineCJ(crane, 0, 0, 0);
+    //addTrolley(crane, 0, 0, 0);
+    //addCable(crane, 0, 0, 0);
+    //addHookBlock(crane, 0, 0, 0);
+    //createClaw(crane, 0, 0, 0);
+
+    scene.add(crane);
+
+    crane.position.x = x;
+    crane.position.y = y;
+    crane.position.z = z;
 }
 ////////////////////////
 /* CREATE OBJECT3D(S) */
@@ -271,7 +308,7 @@ function init() {
     createScene();
     createAllCameras();
 
-    shown_camera = front_camera;
+    shown_camera = fixed_persp_camera;
     render();
 
     window.addEventListener("keydown", onKeyDown);
@@ -299,8 +336,9 @@ function onResize() {
 
     if (window.innerHeight > 0 && window.innerWidth > 0) {
         cameras.forEach(camera => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            //camera.aspect = window.innerWidth / window.innerHeight;   //TODO
+            //camera.updateProjectionMatrix();                          // each camera needs a specific width, height, aspect...
+                                                                        // front == lat == ort != top !== persp
         });
     }
 }
@@ -325,11 +363,19 @@ function onKeyDown(e) {
         shown_camera = fixed_ort_camera;
         break;
     case 53: //5
-        shown_camera = fixed_perp_camera;
+        shown_camera = fixed_persp_camera;
         break;
     case 54: //6
-        shown_camera = moving_camera;  
+        //shown_camera = moving_camera;
         break;
+    case 55: //7
+        scene.traverse(function (node) {
+            if (node instanceof THREE.Mesh) {
+                node.material.wireframe = !node.material.wireframe;
+            }
+        });
+        break;
+        
 
     case 81: //Q
     case 113: //q
