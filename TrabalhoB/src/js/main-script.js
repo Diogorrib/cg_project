@@ -23,7 +23,7 @@ var brown_material = new THREE.MeshBasicMaterial({ color: 0x91470f, wireframe: t
 var blue_material = new THREE.MeshBasicMaterial({ color: 0x5570a3, wireframe: true });
 var yellow_material = new THREE.MeshBasicMaterial({ color: 0xa4ad21, wireframe: true });
 
-var materials = [orange_material, black_material, red_material, grey_material, 
+var materials = [orange_material, black_material, red_material, grey_material,
         green_material, brown_material, blue_material, yellow_material];
 
 var crane;
@@ -53,9 +53,6 @@ function createScene() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xc3e3dd);
 
-    
-    scene.add(new THREE.AxesHelper(20));
-
     ///////////////////
     /* Criar objetos */
     ///////////////////
@@ -63,6 +60,7 @@ function createScene() {
     createContainer(5, 0, 5);
     createCargo(3,0,3);
 
+    scene.add(new THREE.AxesHelper(20));
     crane.upper_crane.add(new THREE.AxesHelper(20));
     crane.upper_crane.trolley_group.add(new THREE.AxesHelper(20));
     crane.upper_crane.trolley_group.claw_group.add(new THREE.AxesHelper(20));
@@ -74,47 +72,47 @@ function createScene() {
 ///////////////////////
 function createFrontCamera() {              //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
-                                                window.innerWidth / 18,
-                                                window.innerHeight / 18,
-                                                -window.innerHeight / 18);
+    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
+                                                window.innerWidth / 17,
+                                                window.innerHeight / 17,
+                                                -window.innerHeight / 17);
     front_camera.position.set(0, 0, 100);
     front_camera.lookAt(scene.position);
 }
 
 function createLatCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
-                                              window.innerWidth / 18,
-                                              window.innerHeight / 18,
-                                              -window.innerHeight / 18);
+    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
+                                              window.innerWidth / 17,
+                                              window.innerHeight / 17,
+                                              -window.innerHeight / 17);
     lat_camera.position.set(100, 0, 0);
     lat_camera.lookAt(scene.position);
 }
 
 function createTopCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 40,
-                                              window.innerWidth / 40,
-                                              window.innerHeight / 40,
-                                              -window.innerHeight / 40);
+    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 38,
+                                              window.innerWidth / 38,
+                                              window.innerHeight / 38,
+                                              -window.innerHeight / 38);
     top_camera.position.set(0, 100, 0);
     top_camera.lookAt(scene.position);
 }
 
 function createFixedOrthographicCamera() {  //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
-                                                    window.innerWidth / 18,
-                                                    window.innerHeight / 18,
-                                                    -window.innerHeight / 18);
+    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
+                                                    window.innerWidth / 17,
+                                                    window.innerHeight / 17,
+                                                    -window.innerHeight / 17);
     fixed_ort_camera.position.set(100, 0, 100);
     fixed_ort_camera.lookAt(scene.position);
 }
 
 function createFixedPerspectiveCamera() {   //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_persp_camera = new THREE.PerspectiveCamera(32,
+    fixed_persp_camera = new THREE.PerspectiveCamera(34,
                             (window.innerWidth / window.innerHeight));
     fixed_persp_camera.position.set(100, 0, 100);
     fixed_persp_camera.lookAt(scene.position);
@@ -128,7 +126,7 @@ function createMovingCamera() {
     moving_camera.position.set(0, -hook_block_height/2, 0);
     moving_camera.lookAt(new THREE.Vector3(0, -hook_block_height, 0));
     crane.upper_crane.trolley_group.claw_group.add(moving_camera);
-}   
+}
 
 function createAllCameras() {
     createFrontCamera();
@@ -229,7 +227,7 @@ function addCounterJib(obj, x, y, z) {
     geometry = new THREE.BoxGeometry(counter_jib_width, counter_jib_heigth, lower_tower_width);
     mesh = new THREE.Mesh(geometry, orange_material);
     mesh.position.set(-(x + (lower_tower_width + counter_jib_width) / 2), 
-                        y + (turntable_height + counter_jib_heigth) / 2 + upper_tower_height, 
+                        y + (turntable_height + counter_jib_heigth) / 2 + upper_tower_height,
                         z);
     obj.add(mesh);
 }
@@ -250,7 +248,7 @@ function addCounterWeight(obj, x, y, z) {
 function addTowerPeak(obj, x, y, z) {
     'use strict';
 
-    geometry = new THREE.ConeGeometry(1.6, tower_peak_height, 4);
+    geometry = new THREE.ConeGeometry(1.5, tower_peak_height, 4);
     mesh = new THREE.Mesh(geometry, orange_material);
     mesh.position.set(x, 
                       y + (turntable_height + tower_peak_height) / 2 + upper_tower_height, 
@@ -262,11 +260,16 @@ function addTowerPeak(obj, x, y, z) {
 function addLoadLineJ(obj, x, y, z) {
     'use strict';
 
-    geometry = new THREE.CylinderGeometry(cable_radius, cable_radius, 12, 6);
+    var delta = { x: (jib_height-5)/2, y: (tower_peak_height-1.5*jib_radius)/2 };
+    var angle = Math.atan((2*delta.x) / (2*delta.y));
+    var cable_size = (2*delta.x) / Math.sin(angle);
+
+    geometry = new THREE.CylinderGeometry(cable_radius, cable_radius, cable_size, 6);
     mesh = new THREE.Mesh(geometry, black_material);
-    mesh.rotation.z = Math.PI * 0.37;
-    mesh.position.set(x + 5.7, 
-                      y + (turntable_height + tower_peak_height) / 2 + upper_tower_height + 1.2, 
+
+    mesh.rotation.z = angle;
+    mesh.position.set(x + delta.x,
+                      y + delta.y + turntable_height/2 + upper_tower_height + 1.5*jib_radius,
                       z);
     obj.add(mesh);
 }
@@ -275,11 +278,16 @@ function addLoadLineJ(obj, x, y, z) {
 function addLoadLineCJ(obj, x, y, z) {
     'use strict';
 
-    geometry = new THREE.CylinderGeometry(cable_radius, cable_radius, 8, 6);
+    var delta = { x: (counter_jib_width-5)/2, y: (tower_peak_height-counter_jib_heigth)/2 };
+    var angle = Math.atan((2*delta.x) / (2*delta.y));
+    var cable_size = (2*delta.x) / Math.sin(angle);
+
+    geometry = new THREE.CylinderGeometry(cable_radius, cable_radius, cable_size, 6);
     mesh = new THREE.Mesh(geometry, black_material);
-    mesh.rotation.z = Math.PI / (4/3);
-    mesh.position.set(x - 3, 
-                      y + (turntable_height + tower_peak_height) / 2 + upper_tower_height + 1, 
+
+    mesh.rotation.z = -angle;
+    mesh.position.set(x - delta.x, 
+                      y + delta.y + turntable_height/2 + upper_tower_height + counter_jib_heigth,
                       z);
     obj.add(mesh);
 }
