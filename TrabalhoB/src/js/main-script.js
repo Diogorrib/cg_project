@@ -4,9 +4,9 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import * as Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-//////////////////////
-/* GLOBAL VARIABLES */
-//////////////////////
+///////////////////////////
+/* __GLOBAL__VARIABLES__ */
+///////////////////////////
 var scene, renderer;
 
 var geometry, mesh;
@@ -24,9 +24,7 @@ var blue_material = new THREE.MeshBasicMaterial({ color: 0x5570a3, wireframe: tr
 var yellow_material = new THREE.MeshBasicMaterial({ color: 0xa4ad21, wireframe: true });
 
 var materials = [orange_material, black_material, red_material, grey_material, 
-        green_material, brown_material, blue_material];
-
-var cameras = [];
+        green_material, brown_material, blue_material, yellow_material];
 
 var crane;
 
@@ -46,16 +44,8 @@ var hook_block_height = 2, hook_block_width = 3;
 var claw_size = 0.7;
 var container_height = 4, container_width = 0.1;
 
-var base_axis = new THREE.Vector3(0, base_height/2, 0);
-var turntable_axis = new THREE.Vector3(0, (turntable_height) / 2 + base_height +
-                                       lower_tower_height, 0);
-
-var trolley_axis = new THREE.Vector3(jib_height,
-                                     upper_tower_height + (turntable_height - trolley_height) / 2,
-                                     0);
-
 /////////////////////
-/* CREATE SCENE(S) */
+/* _____SCENE_____ */
 /////////////////////
 function createScene() {
     'use strict';
@@ -72,27 +62,32 @@ function createScene() {
     createCrane(0,0,0);
     createContainer(5, 0, 5);
     createCargo(3,0,3);
+
+    crane.upper_crane.add(new THREE.AxesHelper(20));
+    crane.upper_crane.trolley_group.add(new THREE.AxesHelper(20));
+    crane.upper_crane.trolley_group.claw_group.add(new THREE.AxesHelper(20));
 }
 
-//////////////////////
-/* CREATE CAMERA(S) */
-//////////////////////
+
+///////////////////////
+/* _____CAMERAS_____ */
+///////////////////////
 function createFrontCamera() {              //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 19,
-                                                window.innerWidth / 19,
-                                                window.innerHeight / 19,
-                                                -window.innerHeight / 19);
+    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
+                                                window.innerWidth / 18,
+                                                window.innerHeight / 18,
+                                                -window.innerHeight / 18);
     front_camera.position.set(0, 0, 100);
     front_camera.lookAt(scene.position);
 }
 
 function createLatCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 19,
-                                              window.innerWidth / 19,
-                                              window.innerHeight / 19,
-                                              -window.innerHeight / 19);
+    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
+                                              window.innerWidth / 18,
+                                              window.innerHeight / 18,
+                                              -window.innerHeight / 18);
     lat_camera.position.set(100, 0, 0);
     lat_camera.lookAt(scene.position);
 }
@@ -109,10 +104,10 @@ function createTopCamera() {                //////////////////////////////// VER
 
 function createFixedOrthographicCamera() {  //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 19,
-                                                    window.innerWidth / 19,
-                                                    window.innerHeight / 19,
-                                                    -window.innerHeight / 19);
+    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 18,
+                                                    window.innerWidth / 18,
+                                                    window.innerHeight / 18,
+                                                    -window.innerHeight / 18);
     fixed_ort_camera.position.set(100, 0, 100);
     fixed_ort_camera.lookAt(scene.position);
 }
@@ -120,7 +115,7 @@ function createFixedOrthographicCamera() {  //////////////////////////////// VER
 function createFixedPerspectiveCamera() {   //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
     fixed_persp_camera = new THREE.PerspectiveCamera(32,
-                                                    (window.innerWidth / window.innerHeight));
+                            (window.innerWidth / window.innerHeight));
     fixed_persp_camera.position.set(100, 0, 100);
     fixed_persp_camera.lookAt(scene.position);
 }
@@ -129,11 +124,9 @@ function createMovingCamera() {
     'use strict';
 
     moving_camera = new THREE.PerspectiveCamera(70,
-                    (window.innerWidth / window.innerHeight));
-    /* var position = crane.upper_crane.trolley_group.position
-    crane.upper_crane.trolley_group.claw_group.position; */
-    moving_camera.position.set(0,-1,0);
-    moving_camera.lookAt(new THREE.Vector3(0,-2,0));
+                        (window.innerWidth / window.innerHeight));
+    moving_camera.position.set(0, -hook_block_height/2, 0);
+    moving_camera.lookAt(new THREE.Vector3(0, -hook_block_height, 0));
     crane.upper_crane.trolley_group.claw_group.add(moving_camera);
 }   
 
@@ -144,21 +137,20 @@ function createAllCameras() {
     createFixedOrthographicCamera();
     createFixedPerspectiveCamera();
     createMovingCamera();
-    cameras.push(front_camera, lat_camera, top_camera, fixed_ort_camera, fixed_persp_camera, moving_camera);
 }
 
-//////////////////////
-/* CREATE CAMERA(S) */
-//////////////////////  END
+///////////////////////
+/* _____CAMERAS_____ */
+///////////////////////
 
 
 /////////////////////
 /* CREATE LIGHT(S) */
 /////////////////////   NOT NEEDED?
 
-////////////////////////
-/* CREATE OBJECT3D(S) */
-////////////////////////
+//////////////////////////////
+/* __OBJECTS__CRANE__BASE__ */
+//////////////////////////////
 
 /** Base da Grua */
 function addBase(obj, x, y, z) {
@@ -176,11 +168,13 @@ function addLowerTower(obj, x, y, z) {
 
     geometry = new THREE.BoxGeometry(lower_tower_width, lower_tower_height, lower_tower_width);
     mesh = new THREE.Mesh(geometry, orange_material);
-    mesh.position.set(x, 
-                      y + (base_height / 2) + (lower_tower_height / 2), 
-                      z);
+    mesh.position.set(x, y + (base_height + lower_tower_height) / 2, z);
     obj.add(mesh);
 }
+
+///////////////////////////////
+/* __OBJECTS__CRANE__UPPER__ */
+///////////////////////////////
 
 /** Eixo de Rotação */
 function addTurntable(obj, x, y, z) {
@@ -198,9 +192,7 @@ function addUpperTower(obj, x, y, z) {
 
     geometry = new THREE.BoxGeometry(3, upper_tower_height, 3);
     mesh = new THREE.Mesh(geometry, orange_material);
-    mesh.position.set(x, 
-                      y + (turntable_height + upper_tower_height) / 2, 
-                      z);
+    mesh.position.set(x, y + (turntable_height + upper_tower_height) / 2, z);
     obj.add(mesh);
 }
 
@@ -248,7 +240,7 @@ function addCounterWeight(obj, x, y, z) {
 
     geometry = new THREE.BoxGeometry(counter_weight_width, counter_weight_height, counter_weight_width);
     mesh = new THREE.Mesh(geometry, grey_material);
-    mesh.position.set(-(x + (lower_tower_width+counter_jib_width+counter_weight_width) / 2),
+    mesh.position.set(-(x + (lower_tower_width + counter_jib_width + counter_weight_width) / 2),
                       y + (turntable_height + counter_jib_heigth - 1) / 2 + upper_tower_height,
                       z);   
     obj.add(mesh);
@@ -292,6 +284,10 @@ function addLoadLineCJ(obj, x, y, z) {
     obj.add(mesh);
 }
 
+/////////////////////////////////
+/* __OBJECTS__CRANE__TROLLEY__ */
+/////////////////////////////////
+
 /** Carrinho */
 function addTrolley(obj, x, y, z) {
     'use strict';
@@ -312,6 +308,10 @@ function addCable(obj, x, y, z) {
     obj.add(mesh);
 }
 
+//////////////////////////////
+/* __OBJECTS__CRANE__CLAW__ */
+//////////////////////////////
+
 /** Bloco do Gancho */
 function addHookBlock(obj, x, y, z) {
     'use strict';
@@ -328,9 +328,87 @@ function addClaw(obj, x, y, z) {
 
     geometry = new THREE.TetrahedronGeometry(claw_size);
     mesh = new THREE.Mesh(geometry, black_material);
-    mesh.position.set(x, y - hook_block_width/2 , z);
+    mesh.position.set(x, y - hook_block_width / 2 , z);
     obj.add(mesh);
 }
+
+/////////////////////////////
+/* __OBJECTS__CRANE__ALL__ */
+/////////////////////////////
+
+function createUpperGroup(obj, x, y, z) {
+    var upper_crane = new THREE.Object3D();
+    upper_crane.position.set(x, y, z);
+
+    addTurntable(upper_crane, 0, 0, 0);
+    addUpperTower(upper_crane, 0, 0, 0);
+    addCabin(upper_crane, 0, 0, 0); 
+    addJib(upper_crane, 0, 0, 0);
+    addCounterJib(upper_crane, 0, 0, 0);
+    addCounterWeight(upper_crane, 0, 0, 0);
+    addTowerPeak(upper_crane, 0, 0, 0);
+    addLoadLineJ(upper_crane, 0, 0, 0);
+    addLoadLineCJ(upper_crane, 0, 0, 0);
+
+    obj.add(upper_crane);
+    crane.upper_crane = upper_crane;
+}
+
+function createTrolleyGroup(obj, x, y, z) {
+    var trolley_group = new THREE.Object3D();
+    trolley_group.position.set(x, y, z);
+    addTrolley(trolley_group, 0, 0, 0);
+
+    obj.add(trolley_group);
+    obj.trolley_group = trolley_group;
+}
+
+function createCableGroup(obj, x, y, z) {
+    var cable_group = new THREE.Object3D();
+    cable_group.position.set(x, y, z);
+    addCable(cable_group, 0, 0, 0);
+    
+    obj.add(cable_group);
+    obj.cable_group = cable_group;
+}
+
+function createClawGroup(obj, x, y, z) {
+    var claw_group = new THREE.Object3D();
+    claw_group.position.set(x, y, z);
+    addHookBlock(claw_group, 0, 0, 0);
+    addClaw(claw_group, 0, 0, hook_block_width/3);
+    addClaw(claw_group, hook_block_width/3, 0, 0);
+    addClaw(claw_group, 0, 0, -hook_block_width/3);
+    addClaw(claw_group, -hook_block_width/3, 0, 0);
+
+    obj.add(claw_group);
+    obj.claw_group = claw_group;
+}
+
+function createCrane(x, y, z) {
+    'use strict';
+
+    crane = new THREE.Object3D();
+    crane.userData = { rotate1: 0, rotate2: 0, move1: 0, move2: 0,
+                       rotation1: 0, rotation2: 0};
+
+    addBase(crane, 0, base_height/2, 0);
+    addLowerTower(crane, 0, base_height/2, 0);
+    createUpperGroup(crane, 0, (turntable_height) / 2 + base_height + lower_tower_height, 0);
+    createTrolleyGroup(crane.upper_crane, jib_height,
+                       upper_tower_height + (turntable_height - trolley_height) / 2, 0);
+    createCableGroup(crane.upper_crane.trolley_group,
+                     0, - (trolley_height + cable_length) / 2, 0);
+    createClawGroup(crane.upper_crane.trolley_group,
+                     0, -cable_length-(trolley_height+hook_block_height)/2, 0);
+
+    scene.add(crane);
+    crane.position.set(x, y, z);
+}
+
+////////////////////////////
+/* __OBJECTS__CONTAINER__ */
+////////////////////////////
 
 /** Base do Contentor */
 function addContainerBase(obj, x, y, z) {
@@ -373,11 +451,12 @@ function createContainer(x, y, z) {
     addLRContainerFace(container, x - 2, y, z);     // right
 
     scene.add(container);
-
-    container.position.x = x;
-    container.position.y = y;
-    container.position.z = z;
+    container.position.set(x, y, z);
 }
+
+////////////////////////
+/* __OBJECTS__CARGO__ */
+////////////////////////
 
 function addCubicCargo(obj, x, y, z) {
     'use strict';
@@ -398,7 +477,7 @@ function addTorusCargo(obj, x, y, z) {
     obj.add(mesh);
 }
 
-function addCosahedronCargo(obj, x, y, z) {
+function addIcosahedronCargo(obj, x, y, z) {
     'use strict';
 
     geometry = new THREE.IcosahedronGeometry(1, 0);
@@ -415,82 +494,11 @@ function createCargo(x, y, z) {
     addCubicCargo(cargo, x - 3, y, z);
     addCubicCargo(cargo, x, y, z + 2);
     addTorusCargo(cargo, x, y, z + 5);
-    addCosahedronCargo(cargo, x + 4, y, z - 2);
+    addIcosahedronCargo(cargo, x + 4, y, z - 2);
 
     scene.add(cargo);
-
-    cargo.position.x = x;
-    cargo.position.y = y;
-    cargo.position.z = z;
+    cargo.position.set(x, y, z);
 }
-
-function createCrane(x, y, z) {
-    'use strict';
-
-    crane = new THREE.Object3D();
-    crane.userData = { rotate1: 0, rotate2: 0, move1: 0, move2: 0,
-                       rotation1: 0, rotation2: 0, delta1: 0, delta2: 0};
-
-    addBase(crane, base_axis.x, base_axis.y, base_axis.z);
-    addLowerTower(crane, base_axis.x, base_axis.y, base_axis.z);
-    
-    var upper_crane = new THREE.Object3D();
-    upper_crane.position.set(turntable_axis.x, turntable_axis.y, turntable_axis.z);
-    addTurntable(upper_crane, 0, 0, 0);
-    addUpperTower(upper_crane, 0, 0, 0);
-    addCabin(upper_crane, 0, 0, 0); 
-    addJib(upper_crane, 0, 0, 0);
-    addCounterJib(upper_crane, 0, 0, 0);
-    addCounterWeight(upper_crane, 0, 0, 0);
-    addTowerPeak(upper_crane, 0, 0, 0);
-    addLoadLineJ(upper_crane, 0, 0, 0);
-    addLoadLineCJ(upper_crane, 0, 0, 0);
-
-    var trolley_group = new THREE.Object3D();
-    trolley_group.position.set(trolley_axis.x, trolley_axis.y, trolley_axis.z);
-    addTrolley(trolley_group, 0, 0, 0);
-
-    var cable_group = new THREE.Object3D();
-    cable_group.position.set(0, - (trolley_height + cable_length) / 2, 0);
-    addCable(cable_group, 0, 0, 0);
-
-    var claw_group = new THREE.Object3D();
-    claw_group.position.set(0, -cable_length-(trolley_height+hook_block_height)/2, 0);
-    addHookBlock(claw_group, 0, 0, 0);
-    addClaw(claw_group, 0, 0, hook_block_width/3);
-    addClaw(claw_group, hook_block_width/3, 0, 0);
-    addClaw(claw_group, 0, 0, -hook_block_width/3);
-    addClaw(claw_group, -hook_block_width/3, 0, 0);
-
-    trolley_group.add(claw_group);
-    trolley_group.add(cable_group);
-    upper_crane.add(trolley_group);
-    crane.add(upper_crane);
-
-    trolley_group.claw_group = claw_group;
-    trolley_group.cable_group = cable_group;
-    upper_crane.trolley_group = trolley_group;
-    crane.upper_crane = upper_crane;
-
-    var turnt_axis = new THREE.AxesHelper(20);
-    upper_crane.add(turnt_axis);
-
-    var trol_axis = new THREE.AxesHelper(20);
-    trolley_group.add(trol_axis);
-
-    var claw_axis_helper = new THREE.AxesHelper(20);
-    claw_group.add(claw_axis_helper);
-
-    scene.add(crane);
-
-    crane.position.x = x;
-    crane.position.y = y;
-    crane.position.z = z;
-}
-
-////////////////////////
-/* CREATE OBJECT3D(S) */
-////////////////////////    END
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -513,20 +521,22 @@ function handleCollisions(){
 ////////////
 function update(){
     'use strict';
-
+    
+    /* Rotation angle teta1 -> rotate upper crane */
     if (crane.userData.rotate1) {
         crane.userData.rotation1 += Math.PI * 0.005 * crane.userData.rotate1;
         crane.upper_crane.rotation.y = crane.userData.rotation1;
     }
 
     var step = 0.05;
+    /* Displacement delta1 -> move trolley */
     if (crane.userData.move1 == -1 && crane.upper_crane.trolley_group.position.x >= lower_tower_width*1.5) {
         crane.upper_crane.trolley_group.position.x -= step;
-    } else if (crane.userData.move1 == 1 && crane.upper_crane.trolley_group.position.x <= trolley_axis.x) {
+    } else if (crane.userData.move1 == 1 && crane.upper_crane.trolley_group.position.x <= jib_height) {
         crane.upper_crane.trolley_group.position.x += step;
     }
 
-    
+    /* Displacement delta2 -> move hook block (ajust cable  size) */
     if (crane.userData.move2 == -1 && crane.upper_crane.trolley_group.claw_group.position.y >= -28.5) {
         crane.upper_crane.trolley_group.claw_group.position.y -= step;
         crane.upper_crane.trolley_group.cable_group.position.y -= step/2;
@@ -536,6 +546,8 @@ function update(){
         crane.upper_crane.trolley_group.cable_group.position.y += step/2;
         crane.upper_crane.trolley_group.cable_group.scale.y -= step/8;
     }
+
+    /* Rotation angle teta2 -> rotate claws */ //TODO
 }
 
 /////////////
@@ -658,11 +670,13 @@ function onKeyDown(e) {
         break;
     case 82: //R
     case 114: //r
-        //TODO
+        if(!crane.userData.rotate2)
+            crane.userData.rotate2 = 1;
         break;
     case 70: //F
     case 102: //f
-        //TODO
+        if(!crane.userData.rotate2)
+            crane.userData.rotate2 = -1;
         break;
     }
 }
@@ -684,7 +698,6 @@ function onKeyUp(e){
         if (crane.userData.rotate1 == -1)
             crane.userData.rotate1 = 0;
         break;
-
     case 87: //W
     case 119: //w
         if (crane.userData.move1 == 1)
@@ -695,7 +708,6 @@ function onKeyUp(e){
         if (crane.userData.move1 == -1)
             crane.userData.move1 = 0;
         break;
-
     case 69: //E
     case 101: //e
         if (crane.userData.move2 == 1)
@@ -706,14 +718,15 @@ function onKeyUp(e){
         if (crane.userData.move2 == -1)
             crane.userData.move2 = 0;
         break;
-    
     case 82: //R
     case 114: //r
-        //TODO
+        if (crane.userData.rotate2 == 1)
+            crane.userData.rotate2 = 0;
         break;
     case 70: //F
     case 102: //f
-        //TODO
+        if (crane.userData.rotate2 == -1)
+            crane.userData.rotate2 = 0;
         break;
     }
 }
