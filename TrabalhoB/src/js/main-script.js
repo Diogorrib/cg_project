@@ -72,50 +72,50 @@ function createScene() {
 ///////////////////////
 function createFrontCamera() {              //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
-                                                window.innerWidth / 17,
-                                                window.innerHeight / 17,
-                                                -window.innerHeight / 17);
-    front_camera.position.set(0, 0, 100);
-    front_camera.lookAt(scene.position);
+    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
+                                                window.innerWidth / 20,
+                                                window.innerHeight / 20,
+                                                -window.innerHeight / 20);
+    front_camera.position.set(0, 15, 100);
+    front_camera.lookAt(new THREE.Vector3(0 , 15, 0));
 }
 
 function createLatCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
-                                              window.innerWidth / 17,
-                                              window.innerHeight / 17,
-                                              -window.innerHeight / 17);
-    lat_camera.position.set(100, 0, 0);
-    lat_camera.lookAt(scene.position);
+    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
+                                              window.innerWidth / 20,
+                                              window.innerHeight / 20,
+                                              -window.innerHeight / 20);
+    lat_camera.position.set(100, 15, 0);
+    lat_camera.lookAt(new THREE.Vector3(0 , 15, 0));
 }
 
 function createTopCamera() {                //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 38,
-                                              window.innerWidth / 38,
-                                              window.innerHeight / 38,
-                                              -window.innerHeight / 38);
+    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 30,
+                                              window.innerWidth / 30,
+                                              window.innerHeight / 30,
+                                              -window.innerHeight / 30);
     top_camera.position.set(0, 100, 0);
     top_camera.lookAt(scene.position);
 }
 
 function createFixedOrthographicCamera() {  //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
-    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 17,
-                                                    window.innerWidth / 17,
-                                                    window.innerHeight / 17,
-                                                    -window.innerHeight / 17);
-    fixed_ort_camera.position.set(100, 0, 100);
-    fixed_ort_camera.lookAt(scene.position);
+    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
+                                                    window.innerWidth / 20,
+                                                    window.innerHeight / 20,
+                                                    -window.innerHeight / 20);
+    fixed_ort_camera.position.set(100, 15, 100);
+    fixed_ort_camera.lookAt(new THREE.Vector3(0 , 15, 0));
 }
 
 function createFixedPerspectiveCamera() {   //////////////////////////////// VER EM CADA PC TAMANHOS MUDAM
     'use strict';
     fixed_persp_camera = new THREE.PerspectiveCamera(34,
                             (window.innerWidth / window.innerHeight));
-    fixed_persp_camera.position.set(100, 0, 100);
-    fixed_persp_camera.lookAt(scene.position);
+    fixed_persp_camera.position.set(100, 15, 100);
+    fixed_persp_camera.lookAt(new THREE.Vector3(0 , 15, 0));
 }
 
 function createMovingCamera() {
@@ -529,6 +529,8 @@ function handleCollisions(){
 ////////////
 function update(){
     'use strict';
+
+    //THREE.Clock           usar isto
     
     /* Rotation angle teta1 -> rotate upper crane */
     if (crane.userData.rotate1) {
@@ -581,6 +583,7 @@ function init() {
     createAllCameras();
 
     shown_camera = front_camera;
+    updateKeyDisplay('1', true);
     render();
 
     window.addEventListener("keydown", onKeyDown);
@@ -614,77 +617,115 @@ function onResize() {
     }
 }
 
+
 ///////////////////////
 /* KEY DOWN CALLBACK */
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
 
+    var keys = ['1', '2', '3', '4', '5', '6'];
+
     switch (e.keyCode) {
     case 49: //1
         shown_camera = front_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '1') ? true : false);
+        });
         break;
     case 50: //2
         shown_camera = lat_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '2') ? true : false);
+        });
         break;
     case 51: //3
         shown_camera = top_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '3') ? true : false);
+        });
         break;
     case 52: //4
         shown_camera = fixed_ort_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '4') ? true : false);
+        });
         break;
     case 53: //5
         shown_camera = fixed_persp_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '5') ? true : false);
+        });
         break;
     case 54: //6
         shown_camera = moving_camera;
+        keys.forEach(key => {
+            updateKeyDisplay(key, (key == '6') ? true : false);
+        });
         break;
     case 55: //7
         materials.forEach(function (material) {
             material.wireframe = !material.wireframe;
         });
+        crane.userData.toggle7 = !crane.userData.toggle7;
+        updateKeyDisplay('7', crane.userData.toggle7);
         break;
         
     case 81: //Q
     case 113: //q
-        if(!crane.userData.rotate1)
+        if(!crane.userData.rotate1){
             crane.userData.rotate1 = 1;
+            updateKeyDisplay('Q', true);
+        }
         break;
     case 65: //A
     case 97: //a
-        if(!crane.userData.rotate1)
+        if(!crane.userData.rotate1){
             crane.userData.rotate1 = -1;
+            updateKeyDisplay('A', true);
+        }
         break;
-
     case 87: //W
     case 119: //w
-        if(!crane.userData.move1)
+        if(!crane.userData.move1){
             crane.userData.move1 = 1;
+            updateKeyDisplay('W', true);
+        }
         break;
     case 83: //S
     case 115: //s
-        if(!crane.userData.move1)
+        if(!crane.userData.move1){
             crane.userData.move1 = -1;
+            updateKeyDisplay('S', true);
+        }
         break;
     case 69: //E
     case 101: //e
-        if(!crane.userData.move2)
+        if(!crane.userData.move2){
             crane.userData.move2 = 1;
+            updateKeyDisplay('E', true);
+        }
         break;
     case 68: //D
     case 100: //d
-        if(!crane.userData.move2)
-            crane.userData.move2 = -1;        
+        if(!crane.userData.move2){
+            crane.userData.move2 = -1;  
+            updateKeyDisplay('D', true);      
+        }
         break;
     case 82: //R
     case 114: //r
-        if(!crane.userData.rotate2)
+        if(!crane.userData.rotate2){
             crane.userData.rotate2 = 1;
+            updateKeyDisplay('R', true);
+        }
         break;
     case 70: //F
     case 102: //f
-        if(!crane.userData.rotate2)
+        if(!crane.userData.rotate2){
             crane.userData.rotate2 = -1;
+            updateKeyDisplay('F', true);
+        }
         break;
     }
 }
@@ -698,46 +739,72 @@ function onKeyUp(e){
     switch (e.keyCode) {
     case 81: //Q
     case 113: //q
-        if (crane.userData.rotate1 == 1)
+        if (crane.userData.rotate1 == 1){
             crane.userData.rotate1 = 0;
+            updateKeyDisplay('Q', false);
+        }
         break;
     case 65: //A
     case 97: //a
-        if (crane.userData.rotate1 == -1)
+        if (crane.userData.rotate1 == -1){
             crane.userData.rotate1 = 0;
+            updateKeyDisplay('A', false);
+        }
         break;
     case 87: //W
     case 119: //w
-        if (crane.userData.move1 == 1)
+        if (crane.userData.move1 == 1){
             crane.userData.move1 = 0;
+            updateKeyDisplay('W', false);
+        }
         break;
     case 83: //S
     case 115: //s
-        if (crane.userData.move1 == -1)
+        if (crane.userData.move1 == -1){
             crane.userData.move1 = 0;
+            updateKeyDisplay('S', false);
+        }
         break;
     case 69: //E
     case 101: //e
-        if (crane.userData.move2 == 1)
+        if (crane.userData.move2 == 1){
             crane.userData.move2 = 0;
+            updateKeyDisplay('E', false);
+        }
         break;
     case 68: //D
     case 100: //d
-        if (crane.userData.move2 == -1)
+        if (crane.userData.move2 == -1){
             crane.userData.move2 = 0;
+            updateKeyDisplay('D', false);
+        }
         break;
     case 82: //R
     case 114: //r
-        if (crane.userData.rotate2 == 1)
+        if (crane.userData.rotate2 == 1){
             crane.userData.rotate2 = 0;
+            updateKeyDisplay('R', false);
+        }
         break;
     case 70: //F
     case 102: //f
-        if (crane.userData.rotate2 == -1)
+        if (crane.userData.rotate2 == -1){
             crane.userData.rotate2 = 0;
+            updateKeyDisplay('F', false);
+        }
         break;
     }
 }
+
+function updateKeyDisplay(key, isActive) {
+    var cell = document.getElementById('key-' + key);
+    if (isActive) {
+        cell.classList.add('key-active');
+    } else {
+        cell.classList.remove('key-active');
+    }
+}
+
 
 init();
 animate();

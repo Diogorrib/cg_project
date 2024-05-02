@@ -3,3 +3,13 @@ body {
     background-color: #eee;
     overflow: hidden;
 }
+#key-hud td {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.key-active {
+    background-color: #4CAF50;
+    color: white;
+}
