@@ -11,7 +11,7 @@ var scene, renderer, clock;
 
 var geometry, mesh;
 
-var claw_sphere, cube1_sphere, torus_knot_sphere, torus_sphere, container_sphere, icosahedron_sphere;
+var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, container_sphere, icosahedron_sphere;
 
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, moving_camera, shown_camera;
@@ -29,6 +29,8 @@ var materials = [orange_material, black_material, red_material, grey_material,
         green_material, brown_material, blue_material, yellow_material];
 
 var crane;
+
+var collisionPairs = [];
 
 /* Relevant size values for axis and position of elements */
 var base_height = 5;
@@ -60,8 +62,7 @@ function createScene() {
     ///////////////////
     createCrane(0,0,0);
     createContainer(6, 0, 6);
-    createCargo(3,0,3);
-
+    createCargo(0,0,0);
 
     scene.add(new THREE.AxesHelper(20));
     crane.upper_crane.add(new THREE.AxesHelper(20));
@@ -395,7 +396,7 @@ function createClawGroup(obj, x, y, z) {
     obj.add(claw_group);
     obj.claw_group = claw_group;
 
-    claw_sphere = createCollisionSphere(new THREE.Vector3(0,0,0), 3.25 ** (1/2));  
+    claw_sphere = createCollisionSphere(new THREE.Vector3(0,0,0), Math.sqrt(3.25));  
     claw_group.add(claw_sphere); 
 }
 
@@ -404,7 +405,7 @@ function createCrane(x, y, z) {
 
     crane = new THREE.Object3D();
     crane.userData = { rotate1: 0, rotate2: 0, move1: 0, move2: 0,
-                       rotation1: 0, rotation2: 0};
+                       rotation1: 0, rotation2: 0, movingToContainer: false, stepsOfMovement: 0};
 
     addBase(crane, 0, base_height/2, 0);
     addLowerTower(crane, 0, base_height/2, 0);
@@ -471,7 +472,7 @@ function createContainer(x, y, z) {
     scene.add(container);
     container.position.set(x, y, z);
 
-    container_sphere = createCollisionSphere(new THREE.Vector3(0, 2, 0), 8 ** (1/2)); 
+    container_sphere = createCollisionSphere(new THREE.Vector3(0, 2, 0), Math.sqrt(8));
     container.add(container_sphere); 
 }
 
@@ -479,67 +480,79 @@ function createContainer(x, y, z) {
 /* __OBJECTS__CARGO__ */
 ////////////////////////
 
-function addCubicCargo(obj, x, y, z) {
+function addCubicCargo(x, y, z) {
     'use strict';
+    var obj = new THREE.Object3D();
     
     geometry = new THREE.BoxGeometry(1, 1, 1);
     mesh = new THREE.Mesh(geometry, yellow_material);
-    mesh.position.set(x, y + 1/2, z);
+    mesh.position.set(0, 0.5, 0);
     obj.add(mesh);
 
-    cube1_sphere = createCollisionSphere(new THREE.Vector3(x, y + 0.5, z), 0.5 ** (1/2));  
-    obj.add(cube1_sphere); 
+    cube_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), Math.sqrt(0.5));
+    obj.add(cube_sphere);
+
+    scene.add(obj);
+    obj.position.set(x, y, z);
 }
 
-function addTorusKnotCargo(obj, x, y, z) {
+function addTorusKnotCargo(x, y, z) {
     'use strict';
-    
+    var obj = new THREE.Object3D();
+
     geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 200, 2, 3);
     mesh = new THREE.Mesh(geometry, yellow_material);
-    mesh.position.set(x, y + 1/2, z);
+    mesh.position.set(0, 0.5, 0);
     obj.add(mesh);
 
-    torus_knot_sphere = createCollisionSphere(new THREE.Vector3(x, y + 0.5, z), 3.2 ** (1/2));  
+    torus_knot_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), Math.sqrt(3.2));  
     obj.add(torus_knot_sphere);
+
+    scene.add(obj);
+    obj.position.set(x, y, z);
 }
 
-function addTorusCargo(obj, x, y, z) {
+function addTorusCargo(x, y, z) {
     'use strict';
+    var obj = new THREE.Object3D();
 
     geometry = new THREE.TorusGeometry(0.7, 0.5, 10, 100);
     mesh = new THREE.Mesh(geometry, yellow_material);
     mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(x, y + 1/2, z);
+    mesh.position.set(0, 0.5, 0);
     obj.add(mesh);
 
-    torus_sphere = createCollisionSphere(new THREE.Vector3(x, y + 0.35, z), 1.2);
-    obj.add(torus_sphere); 
+    torus_sphere = createCollisionSphere(new THREE.Vector3(0, 0.35, 0), 1.2);
+    obj.add(torus_sphere);
+
+    scene.add(obj);
+    obj.position.set(x, y, z);
 }
 
-function addIcosahedronCargo(obj, x, y, z) {
+function addIcosahedronCargo(x, y, z) {
     'use strict';
+    var obj = new THREE.Object3D();
 
     geometry = new THREE.IcosahedronGeometry(1, 0);
     mesh = new THREE.Mesh(geometry, yellow_material);
     mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(x, y + 1/2, z);
+    mesh.position.set(0, 0.5, 0);
     obj.add(mesh);
 
-    icosahedron_sphere = createCollisionSphere(new THREE.Vector3(x, y + 0.5, z), 1); 
-    obj.add(icosahedron_sphere); 
+    icosahedron_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), 1); 
+    obj.add(icosahedron_sphere);
+
+    scene.add(obj);
+    obj.position.set(x, y, z);
 }
 
-function createCargo(x, y, z) {
+function createCargo() {
     'use strict';
 
-    var cargo = new THREE.Object3D();
-    addCubicCargo(cargo, - 10, 0, - 10);
-    addTorusKnotCargo(cargo,  8, 0, 8);
-    addTorusCargo(cargo, 0, 0, - 10);
-    addIcosahedronCargo(cargo, - 7, 0, 4);
-
-    scene.add(cargo);
-    cargo.position.set(x, y, z); 
+    addCubicCargo(-7, 0, -7);
+    addTorusKnotCargo(11, 0, 0);
+    addTorusCargo(3, 0, -7);
+    addIcosahedronCargo(-4, 0, 7);
 }
 
 function createCollisionSphere(position, radius) {
@@ -547,14 +560,21 @@ function createCollisionSphere(position, radius) {
     var sphere = new THREE.Object3D();
     
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, visible: false });
     sphere = new THREE.Mesh(geometry, material);
   
     // Position the sphere based on the object's current position
     sphere.position.copy(position);
   
     return sphere;
-  }
+}
+
+function dropCargo() {
+    var obj = collisionPairs.pop().obj2;
+    container_sphere.parent.add(obj.parent);
+    obj.parent.position.set(0, container_height/2, 0);
+    obj.parent.remove(obj);
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -575,28 +595,20 @@ function getRelativePosition(obj) {
 
 function checkCollisions(){
     'use strict';
-    var objects = [claw_sphere, container_sphere, cube1_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
-    var collisionPairs = [];
+    var objects = [/* container_sphere, */ cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
     
-    if (objects) {  
-        for (var i = 0; i < objects.length; i++) {
-            var obj1 = objects[i];
-            var obj1_position = getRelativePosition(obj1);
-
-            for (var j = i + 1; j < objects.length; j++) {
-                var obj2 = objects[j];
-                var obj2_position = getRelativePosition(obj2);
-                
-                var distance = obj1_position.distanceTo(obj2_position);
-                var sumRadii = obj1.geometry.parameters.radius + obj2.geometry.parameters.radius;
-                if (distance <= sumRadii) {
-                    collisionPairs.push({ obj1: obj1, obj2: obj2 });
-                    console.log('Collision detected');
-                }
+    if (objects && claw_sphere) { 
+        var claw_position = getRelativePosition(claw_sphere); 
+        objects.forEach(obj => {
+            var obj_position = getRelativePosition(obj);
+            
+            var distance = claw_position.distanceTo(obj_position);
+            var sumRadii = claw_sphere.geometry.parameters.radius + obj.geometry.parameters.radius;
+            if (distance <= sumRadii) {
+                collisionPairs.push({ obj1: claw_sphere, obj2: obj });
+                console.log('Collision detected');
             }
-        }
-    
-        return collisionPairs;
+        });
     }
 }
 
@@ -606,6 +618,107 @@ function checkCollisions(){
 function handleCollisions(){
     'use strict';
 
+    if (collisionPairs.length > 0) {
+        
+        //var pair = collisionPairs.pop();
+
+        /* if (pair.obj2 === container_sphere) {
+            containerCollision();
+        } else { */
+            crane.userData.movingToContainer = true;
+            cargoCollision(collisionPairs[0]);
+            //crane.userData.movingToContainer = false;
+        /* } */
+    }
+}
+
+function cargoCollision(pair) {
+    var objectGroup = pair.obj2.parent;
+
+    claw_sphere.parent.add(objectGroup);
+    objectGroup.position.set(0, -pair.obj2.geometry.parameters.radius
+                                -claw_sphere.geometry.parameters.radius, 0);
+
+    /* crane.userData.rotate1 = 0;
+    crane.userData.rotate2 = 0;
+    crane.userData.move1 = 0;
+    crane.userData.move2 = 0; */
+
+    /* claw_sphere.parent.position.y -= 15; */
+
+    crane.userData.movingToContainer = true;
+    
+    /* container_sphere.parent.add(objectGroup);
+    objectGroup.position.set(0, container_height/2, 0);  */   
+}
+
+function moveClawTowardsTarget() { 
+                                        // 2) rotate1 + move1 até tar em cima do contentor
+                                        // 3) move2 pra baixo até tar a dentro do contentor
+                                        // 4) move2 pra cima pra largar o objeto
+
+    if (crane.userData.stepsOfMovement == 0) {
+        /** move claw up */
+        if (crane.upper_crane.trolley_group.claw_group.position.y < -15) {
+            crane.userData.move2 = 1;
+        } else {
+            crane.userData.move2 = 0;
+            crane.userData.stepsOfMovement++;
+        }
+    } else if (crane.userData.stepsOfMovement == 1) {
+        /** rotate crane */
+        var actual_angle = crane.userData.rotation1 % (2 * Math.PI);
+        if (actual_angle < 0) actual_angle += 2 * Math.PI;
+
+        var target_angle = (7 * Math.PI) / 4;
+        var angle_difference = Math.abs(target_angle - actual_angle);
+
+        if (angle_difference < 0.01) { // ]-0.01, 0.01[
+            crane.userData.rotate1 = 0;
+            crane.userData.stepsOfMovement++;
+        } else if (actual_angle >= target_angle-Math.PI && actual_angle < target_angle) {
+            crane.userData.rotate1 = 1;
+        } else if (actual_angle < target_angle-Math.PI || actual_angle > target_angle) {
+            crane.userData.rotate1 = -1;
+        }
+    } else if (crane.userData.stepsOfMovement == 2) {
+        /** move trolley */
+        var actual_position = getRelativePosition(crane.upper_crane.trolley_group); 
+        var target_position = (new THREE.Vector3(6, 0, 6));
+        
+        var position_difference = Math.abs(target_position.x - actual_position.x);
+
+        if (position_difference < 0.1) { // ]-0.1, 0.1[
+            crane.userData.move1 = 0;
+            crane.userData.stepsOfMovement++;
+        } else if (actual_position.x < target_position.x) {
+            crane.userData.move1 = 1;
+        } else if (actual_position.x > target_position.x) {
+            crane.userData.move1 = -1;
+        }
+    } else if (crane.userData.stepsOfMovement == 3) {
+        /** move claw down */
+        if (crane.upper_crane.trolley_group.claw_group.position.y > -25) {
+            crane.userData.move2 = -1;
+        } else {
+            dropCargo();
+            crane.userData.move2 = 0;
+            crane.userData.stepsOfMovement++;
+        }
+    } else if (crane.userData.stepsOfMovement == 4) {
+        /** move claw up */
+        if (crane.upper_crane.trolley_group.claw_group.position.y < -15) {
+            //dropCargo();
+            crane.userData.move2 = 1;
+        } else {
+            crane.userData.move2 = 0;
+            crane.userData.movingToContainer = false;
+            crane.userData.stepsOfMovement = 0;
+        }
+    }
+}
+
+function containerCollision() { // opcional
 }
 
 ////////////
@@ -616,11 +729,11 @@ function update(){
 
     var stepPerSecond = 0.05 * 60;
     var delta = clock.getDelta();
-    var scaledStep = stepPerSecond * delta; 
+    var scaledStep = stepPerSecond * delta;
 
     /* Rotation angle teta1 -> rotate upper crane */
     if (crane.userData.rotate1) {
-        crane.userData.rotation1 += Math.PI * crane.userData.rotate1 * delta * 0.4;
+        crane.userData.rotation1 += Math.PI * crane.userData.rotate1 * delta * 0.2;
         crane.upper_crane.rotation.y = crane.userData.rotation1;
     }
 
@@ -647,19 +760,25 @@ function update(){
         var rotationStep = Math.PI * delta * 0.2;  // Define a velocidade da rotação das garras
         if (crane.userData.rotate2 == 1 && crane.userData.rotation2 < Math.PI / 4) { // Limita a abertura
             crane.userData.rotation2 += rotationStep;
-        } else if (crane.userData.rotate2 == -1 && crane.userData.rotation2 > -Math.PI / 4) { // Limita o fechamento
+        } else if (crane.userData.rotate2 == -1 && crane.userData.rotation2 > -Math.PI / 4) { // Limita o fecho
             crane.userData.rotation2 -= rotationStep;
         }
     
         // Aplica a rotação atualizada para cada garra no grupo de garras
         crane.upper_crane.trolley_group.claw_group.children.forEach(function(claw) {
-            if (claw.geometry && claw.geometry.type == 'TetrahedronGeometry') { // Supondo que as garras são Tetrahedrons
+            if (claw.geometry && claw.geometry.type == 'TetrahedronGeometry') { // Supondo que as garras são Tetrahedros
                 claw.rotation.z = crane.userData.rotation2;
             }
         });
     }
 
-    checkCollisions();
+    // If the crane is set to move towards the container
+    if (crane.userData.movingToContainer) {
+        moveClawTowardsTarget(delta);
+    } else {
+        checkCollisions();
+        handleCollisions();
+    }
 }
 
 /////////////
@@ -686,8 +805,8 @@ function init() {
 
     clock = new THREE.Clock(true);
 
-    shown_camera = front_camera;
-    updateKeyDisplay('1', true);
+    shown_camera = front_camera;    // initialize with front camera
+    updateKeyDisplay('1', true);    // for HUD too
     render();
 
     window.addEventListener("keydown", onKeyDown);
@@ -729,6 +848,8 @@ function onKeyDown(e) {
     'use strict';
 
     var keys = ['1', '2', '3', '4', '5', '6'];
+
+    if (crane.userData.movingToContainer) return;
 
     switch (e.keyCode) {
     case 49: //1
@@ -839,6 +960,8 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e){
     'use strict';
+
+    if (crane.userData.movingToContainer) return;
 
     switch (e.keyCode) {
     case 81: //Q
