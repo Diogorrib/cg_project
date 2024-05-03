@@ -32,6 +32,8 @@ var crane;
 
 var collisionPairs = [];
 
+var stop_car = false;
+
 /* Relevant size values for axis and position of elements */
 var base_height = 5;
 var lower_tower_height = 20, lower_tower_width = 3;
@@ -595,7 +597,7 @@ function getRelativePosition(obj) {
 
 function checkCollisions(){
     'use strict';
-    var objects = [/* container_sphere, */ cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
+    var objects = [container_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
     
     if (objects && claw_sphere) { 
         var claw_position = getRelativePosition(claw_sphere); 
@@ -620,15 +622,15 @@ function handleCollisions(){
 
     if (collisionPairs.length > 0) {
         
-        //var pair = collisionPairs.pop();
+        var pair = collisionPairs.pop();
 
-        /* if (pair.obj2 === container_sphere) {
+        if (pair.obj2 === container_sphere) {
             containerCollision();
-        } else { */
+        } else {
             crane.userData.movingToContainer = true;
             cargoCollision(collisionPairs[0]);
             //crane.userData.movingToContainer = false;
-        /* } */
+        }
     }
 }
 
@@ -639,17 +641,7 @@ function cargoCollision(pair) {
     objectGroup.position.set(0, -pair.obj2.geometry.parameters.radius
                                 -claw_sphere.geometry.parameters.radius, 0);
 
-    /* crane.userData.rotate1 = 0;
-    crane.userData.rotate2 = 0;
-    crane.userData.move1 = 0;
-    crane.userData.move2 = 0; */
-
-    /* claw_sphere.parent.position.y -= 15; */
-
-    crane.userData.movingToContainer = true;
-    
-    /* container_sphere.parent.add(objectGroup);
-    objectGroup.position.set(0, container_height/2, 0);  */   
+    crane.userData.movingToContainer = true;   
 }
 
 function moveClawTowardsTarget() { 
@@ -718,8 +710,12 @@ function moveClawTowardsTarget() {
     }
 }
 
-function containerCollision() { // opcional
+function containerCollision() {
+    'use strict';
+    crane.userData.move2 = 0;
+    stop_car = true;
 }
+
 
 ////////////
 /* UPDATE */
@@ -766,7 +762,7 @@ function update(){
     
         // Aplica a rotação atualizada para cada garra no grupo de garras
         crane.upper_crane.trolley_group.claw_group.children.forEach(function(claw) {
-            if (claw.geometry && claw.geometry.type == 'TetrahedronGeometry') { // Supondo que as garras são Tetrahedros
+            if (claw.geometry && claw.geometry.type == 'TetrahedronGeometry') { 
                 claw.rotation.z = crane.userData.rotation2;
             }
         });
@@ -933,7 +929,7 @@ function onKeyDown(e) {
         break;
     case 68: //D
     case 100: //d
-        if(!crane.userData.move2){
+        if(!crane.userData.move2 && !stop_car){
             crane.userData.move2 = -1;  
             updateKeyDisplay('D', true);      
         }
@@ -997,13 +993,17 @@ function onKeyUp(e){
         if (crane.userData.move2 == 1){
             crane.userData.move2 = 0;
             updateKeyDisplay('E', false);
+            stop_car = false;
         }
         break;
     case 68: //D
     case 100: //d
+        if(stop_car)
+            crane.userData.move2 = -1;
         if (crane.userData.move2 == -1){
             crane.userData.move2 = 0;
             updateKeyDisplay('D', false);
+            stop_car = false;
         }
         break;
     case 82: //R
