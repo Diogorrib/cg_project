@@ -30,6 +30,8 @@ var materials = [orange_material, black_material, red_material, grey_material,
 
 var crane, upper_crane, trolley_group, cable_group, claw_group;
 
+var claws = [];
+
 var pendingCollisions = [];
 
 /* Relevant size values for axis and position of elements */
@@ -126,10 +128,11 @@ function createFixedPerspectiveCamera() {
 function createMovingCamera() {
     'use strict';
 
-    moving_camera = new THREE.PerspectiveCamera(70,
+    moving_camera = new THREE.PerspectiveCamera(40,
                         (window.innerWidth / window.innerHeight));
     moving_camera.position.set(0, -hook_block_height/2 + 1, 0);
     moving_camera.lookAt(new THREE.Vector3(0, -hook_block_height, 0));
+    moving_camera.rotation.z = -Math.PI/2
     claw_group.add(moving_camera);
 }
 
@@ -331,21 +334,38 @@ function addHookBlock(obj, x, y, z) {
 }
 
 /** Dente da Garra */
-function addClaw(obj, x, y, z) {
+function addClaw(obj, x, y, z, angle) {
     'use strict';
 
-    /** Anúncio no fenix sobre as garras
-     * 
-     * Como devem ter reparado, o tetraedro do Three.js não está nem alinhado nem centrado com o seu referencial local.
-     * Assim, como alternativas, podem criar a vossa própria primitiva "tetraedro" usando um THREE.BufferGeometry().
-     * Esta class Three.js será também usada quando modelarem a faixa de Möbius do Trabalho C.
-     * 
-     * */
+    var l = 1;
+    geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array( [
+        /** Base */
+        -Math.sin(Math.PI/6)*l, 0, l/2,
+        Math.sin(Math.PI/6)*l, 0, 0,        
+        -Math.sin(Math.PI/6)*l, 0, -l/2,
 
-    geometry = new THREE.TetrahedronGeometry(claw_size);
+        /** Side to center */
+        -Math.sin(Math.PI/6)*l, 0, -l/2,
+        0, -1.2*l, 0,
+        -Math.sin(Math.PI/6)*l, 0, l/2,
+
+        /** Side */
+        -Math.sin(Math.PI/6)*l, 0, l/2,
+        0, -1.2*l, 0,
+        Math.sin(Math.PI/6)*l, 0, 0,
+
+        /** Side */
+        Math.sin(Math.PI/6)*l, 0, 0,
+        0, -1.2*l, 0,
+        -Math.sin(Math.PI/6)*l, 0, -l/2,
+    ] );
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     mesh = new THREE.Mesh(geometry, black_material);
-    mesh.position.set(x, y - hook_block_width / 2 , z);
+    mesh.position.set(x, y - hook_block_height / 2 , z);
+    mesh.rotation.y = angle;
     obj.add(mesh);
+    claws.push(mesh);
 }
 
 /////////////////////////////
@@ -389,10 +409,10 @@ function createClawGroup(obj, x, y, z) {
     claw_group = new THREE.Object3D();
     claw_group.position.set(x, y, z);
     addHookBlock(claw_group, 0, 0, 0);
-    addClaw(claw_group, 0, 0, hook_block_width/3);
-    addClaw(claw_group, hook_block_width/3, 0, 0);
-    addClaw(claw_group, 0, 0, -hook_block_width/3);
-    addClaw(claw_group, -hook_block_width/3, 0, 0);
+    addClaw(claw_group, 0, 0, hook_block_width/3, -Math.PI/2);
+    addClaw(claw_group, hook_block_width/3, 0, 0, 0);
+    addClaw(claw_group, 0, 0, -hook_block_width/3, Math.PI/2);
+    addClaw(claw_group, -hook_block_width/3, 0, 0, Math.PI);
 
     obj.add(claw_group);
 
@@ -456,8 +476,6 @@ function addLRContainerFace(obj, x, y, z) {
 function createContainer(x, y, z) {
     'use strict';
     var container = new THREE.Object3D();
-
-    var position = getRelativePosition(container);
     
     addContainerBase(container, 0, 0, 0);
     addFBContainerFace(container, 0, 0, 2);     // front
@@ -743,6 +761,8 @@ function update() {
     var stepPerSecond = 0.05 * 60;
     var delta = clock.getDelta();
     var scaledStep = stepPerSecond * delta;
+    
+    var rotationStep = stepPerSecond * Math.PI * delta * 0.1;
 
     if (crane.userData.movingToContainer) {
         moveClawTowardsContainer(delta);
@@ -753,23 +773,23 @@ function update() {
 
     /* Rotation angle teta1 -> rotate upper crane */
     if (crane.userData.rotate1) {
-        crane.userData.rotation1 += Math.PI * crane.userData.rotate1 * delta * 0.2;
+        crane.userData.rotation1 += rotationStep/2 * crane.userData.rotate1;
         upper_crane.rotation.y = crane.userData.rotation1;
     }
 
     /* Displacement delta1 -> move trolley */
-    if (crane.userData.move1 == -1 && trolley_group.position.x >= lower_tower_width*1.5) {
+    if (crane.userData.move1 == -1 && trolley_group.position.x >= lower_tower_width*1.5) { // Limit foward
         trolley_group.position.x -= scaledStep;
-    } else if (crane.userData.move1 == 1 && trolley_group.position.x <= jib_height) {
+    } else if (crane.userData.move1 == 1 && trolley_group.position.x <= jib_height) { // Limit back
         trolley_group.position.x += scaledStep;
     }
 
     /* Displacement delta2 -> move hook block (ajust cable  size) */
-    if (crane.userData.move2 == -1 && claw_group.position.y >= -28.5) {
+    if (crane.userData.move2 == -1 && claw_group.position.y >= -28.5) { // Limit down
         claw_group.position.y -= scaledStep;
         cable_group.position.y -= scaledStep/2;
         cable_group.scale.y += scaledStep/8;
-    } else if (crane.userData.move2 == 1 && claw_group.position.y <= -4) {
+    } else if (crane.userData.move2 == 1 && claw_group.position.y <= -4) { // Limit up
         claw_group.position.y += scaledStep;
         cable_group.position.y += scaledStep/2;
         cable_group.scale.y -= scaledStep/8;
@@ -777,18 +797,14 @@ function update() {
 
     /* Rotation angle teta2 -> rotate claws */
     if (crane.userData.rotate2) {
-        var rotationStep = Math.PI * delta * 0.2;  // Define a velocidade da rotação das garras
-        if (crane.userData.rotate2 == 1 && crane.userData.rotation2 < Math.PI / 4) { // Limita a abertura
+        if (crane.userData.rotate2 == 1 && crane.userData.rotation2 < Math.PI / 4) { // Limit open
             crane.userData.rotation2 += rotationStep;
-        } else if (crane.userData.rotate2 == -1 && crane.userData.rotation2 > -Math.PI / 4) { // Limita o fecho
+        } else if (crane.userData.rotate2 == -1 && crane.userData.rotation2 > -Math.PI / 4) { // Limit close
             crane.userData.rotation2 -= rotationStep;
         }
     
-        // Aplica a rotação atualizada para cada garra no grupo de garras
-        claw_group.children.forEach(function(claw) {
-            if (claw.geometry && claw.geometry.type == 'TetrahedronGeometry') { 
-                claw.rotation.z = crane.userData.rotation2;
-            }
+        claws.forEach(claw => {
+            claw.rotation.z = crane.userData.rotation2;
         });
     }
 }
