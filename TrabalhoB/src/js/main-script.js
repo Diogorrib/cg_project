@@ -11,7 +11,7 @@ var scene, renderer, clock;
 
 var geometry, mesh;
 
-var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, container_sphere, icosahedron_sphere;
+var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere; //container_sphere
 
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, moving_camera, shown_camera;
@@ -28,7 +28,7 @@ var yellow_material = new THREE.MeshBasicMaterial({ color: 0xa4ad21, wireframe: 
 var materials = [orange_material, black_material, red_material, grey_material,
         green_material, brown_material, blue_material, yellow_material];
 
-var crane, upper_crane, trolley_group, cable_group, claw_group;
+var crane, upper_crane, trolley_group, cable_group, claw_group, container;
 
 var claws = [];
 
@@ -475,7 +475,7 @@ function addLRContainerFace(obj, x, y, z) {
 
 function createContainer(x, y, z) {
     'use strict';
-    var container = new THREE.Object3D();
+    container = new THREE.Object3D();
     
     addContainerBase(container, 0, 0, 0);
     addFBContainerFace(container, 0, 0, 2);     // front
@@ -486,8 +486,8 @@ function createContainer(x, y, z) {
     scene.add(container);
     container.position.set(x, y, z);
 
-    container_sphere = createCollisionSphere(new THREE.Vector3(0, 2, 0), Math.sqrt(8));
-    container.add(container_sphere); 
+    /* container_sphere = createCollisionSphere(new THREE.Vector3(0, 2, 0), Math.sqrt(8));
+    container.add(container_sphere);  */
 }
 
 ////////////////////////
@@ -706,7 +706,7 @@ function rotateCraneToContainer() {
     }
 }
 
-function moveTrolleyToConatiner() {
+function moveTrolleyToContainer() {
     var actual_position = getRelativePosition(trolley_group); 
     var target_position = (new THREE.Vector3(6, 0, 6));
     
@@ -723,10 +723,10 @@ function moveTrolleyToConatiner() {
 }
 
 /** Drop the cargo inside the container and
- * remove its sphere since it is already inside the conatiner */
+ * remove its sphere since it is already inside the container */
 function dropCargo() {
     var sphere = pendingCollisions.pop();   // collision handled (remove from pending)
-    container_sphere.parent.add(sphere.parent);
+    container.add(sphere.parent);
     sphere.parent.position.set(0, container_height/2, 0);
     sphere.parent.remove(sphere);
 }
@@ -737,7 +737,7 @@ function moveClawTowardsContainer() {
     } else if (crane.userData.stepsOfMovement == 1) {
         rotateCraneToContainer();
     } else if (crane.userData.stepsOfMovement == 2) {
-        moveTrolleyToConatiner();
+        moveTrolleyToContainer();
     } else if (crane.userData.stepsOfMovement == 3) {
         moveClawDown();
     } else if (crane.userData.stepsOfMovement == 4) {
