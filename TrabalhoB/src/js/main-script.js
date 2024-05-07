@@ -621,7 +621,7 @@ function checkCollisions() {
         objects.forEach(obj => {
             var obj_position = getRelativePosition(obj);
             
-            var distance = (claw_position.x - obj_position.x)**2 + (claw_position.y - obj_position.y)**2
+            var distance = (claw_position.z - obj_position.z)**2 + (claw_position.x - obj_position.x)**2 + (claw_position.y - obj_position.y)**2;
             var sumRadius = (claw_sphere.geometry.parameters.radius + obj.geometry.parameters.radius)**2;
             
             if (distance <= sumRadius) {
