@@ -1,8 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
-import * as Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 ///////////////////////////
 /* __GLOBAL__VARIABLES__ */
@@ -11,7 +7,7 @@ var scene, renderer, clock;
 
 var geometry, mesh;
 
-var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere; //container_sphere
+var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere;
 
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, moving_camera, shown_camera;
@@ -60,9 +56,9 @@ function createScene() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xc3e3dd);
 
-    ///////////////////
-    /* Criar objetos */
-    ///////////////////
+    ////////////////////
+    /* Create objects */
+    ////////////////////
     createCrane(0,0,0);
     createContainer(6, 0, 6);
     createCargo();
@@ -144,10 +140,6 @@ function createAllCameras() {
     createFixedPerspectiveCamera();
     createMovingCamera();
 }
-
-/////////////////////
-/* CREATE LIGHT(S) */
-/////////////////////   NOT NEEDED?
 
 //////////////////////////////
 /* __OBJECTS__CRANE__BASE__ */
@@ -485,9 +477,6 @@ function createContainer(x, y, z) {
 
     scene.add(container);
     container.position.set(x, y, z);
-
-    /* container_sphere = createCollisionSphere(new THREE.Vector3(0, 2, 0), Math.sqrt(8));
-    container.add(container_sphere);  */
 }
 
 ////////////////////////
@@ -560,6 +549,24 @@ function createIcosahedronCargo(x, y, z) {
     obj.position.set(x, y, z);
 }
 
+function createDodecaedronCargo(x, y, z) {
+    'use strict';
+
+    var obj = new THREE.Object3D();
+
+    geometry = new THREE.DodecahedronGeometry(1, 0);
+    mesh = new THREE.Mesh(geometry, yellow_material);
+    mesh.rotation.x = Math.PI / 2;
+    mesh.position.set(0, 0.5, 0);
+    obj.add(mesh);
+
+    icosahedron_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), 1); 
+    obj.add(icosahedron_sphere);
+
+    scene.add(obj);
+    obj.position.set(x, y, z);
+}
+
 function createCargo() {
     'use strict';
 
@@ -567,6 +574,7 @@ function createCargo() {
     createTorusKnotCargo(11, 0, 0);
     createTorusCargo(3, 0, -7);
     createIcosahedronCargo(-4, 0, 7);
+    createDodecaedronCargo(10, 0, 10);
 }
 
 ////////////////////////////
@@ -606,18 +614,18 @@ function getRelativePosition(obj) {
 
 function checkCollisions() {
     'use strict';
-    var objects = [/* container_sphere, */ cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
+    var objects = [cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
     
     if (objects && claw_sphere) { 
         var claw_position = getRelativePosition(claw_sphere); 
         objects.forEach(obj => {
             var obj_position = getRelativePosition(obj);
             
-            var distance = claw_position.distanceTo(obj_position);
-            var sumRadii = claw_sphere.geometry.parameters.radius + obj.geometry.parameters.radius;
-            if (distance <= sumRadii) {
+            var distance = (claw_position.x - obj_position.x)**2 + (claw_position.y - obj_position.y)**2
+            var sumRadius = (claw_sphere.geometry.parameters.radius + obj.geometry.parameters.radius)**2;
+            
+            if (distance <= sumRadius) {
                 pendingCollisions.push(obj);
-                console.log('Collision detected');
             }
         });
     }
@@ -630,12 +638,6 @@ function handleCollisions() {
     'use strict';
 
     if (pendingCollisions.length > 0) {
-        
-        /* var sphere = pendingCollisions[0];
-
-        if (sphere === container_sphere) {   // NOT NEEDED?
-            containerCollision();
-        } else { */
         cargoCollision(pendingCollisions[0]);
     }
 }
@@ -745,13 +747,6 @@ function moveClawTowardsContainer() {
     }
 }
 
-/* function containerCollision() {
-    'use strict';
-    crane.userData.move2 = 0;
-    stop_car = true;
-} */
-
-
 ////////////////
 /* __UPDATE__ */
 ////////////////
@@ -814,6 +809,7 @@ function update() {
 /////////////
 function render() {
     'use strict';
+
     renderer.render(scene, shown_camera);
 }
 
@@ -839,7 +835,6 @@ function init() {
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    //window.addEventListener("resize", onResize);  NOT NEEDED?
 }
 
 /////////////////////
@@ -854,21 +849,6 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-////////////////////////////
-/* RESIZE WINDOW CALLBACK */    // NOT NEEDED?
-////////////////////////////
-/* function onResize() {
-    'use strict';
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        fixed_persp_camera.aspect = (window.innerWidth / window.innerHeight);
-        fixed_persp_camera.updateProjectionMatrix();
-    }
-} */
-
-
 ///////////////////////
 /* KEY DOWN CALLBACK */
 ///////////////////////
@@ -876,9 +856,6 @@ function onKeyDown(e) {
     'use strict';
 
     var keys = ['1', '2', '3', '4', '5', '6'];
-
-    // block keyDown events
-    if (crane.userData.movingToContainer) return;
 
     switch (e.keyCode) {
     case 49: //1
@@ -927,56 +904,56 @@ function onKeyDown(e) {
         
     case 81: //Q
     case 113: //q
-        if(!crane.userData.rotate1) {
+        if(!crane.userData.rotate1 && !crane.userData.movingToContainer) {
             crane.userData.rotate1 = 1;
             updateKeyDisplay('Q', true);
         }
         break;
     case 65: //A
     case 97: //a
-        if(!crane.userData.rotate1) {
+        if(!crane.userData.rotate1 && !crane.userData.movingToContainer) {
             crane.userData.rotate1 = -1;
             updateKeyDisplay('A', true);
         }
         break;
     case 87: //W
     case 119: //w
-        if(!crane.userData.move1) {
+        if(!crane.userData.move1 && !crane.userData.movingToContainer) {
             crane.userData.move1 = 1;
             updateKeyDisplay('W', true);
         }
         break;
     case 83: //S
     case 115: //s
-        if(!crane.userData.move1) {
+        if(!crane.userData.move1 && !crane.userData.movingToContainer) {
             crane.userData.move1 = -1;
             updateKeyDisplay('S', true);
         }
         break;
     case 69: //E
     case 101: //e
-        if(!crane.userData.move2) {
+        if(!crane.userData.move2 && !crane.userData.movingToContainer) {
             crane.userData.move2 = 1;
             updateKeyDisplay('E', true);
         }
         break;
     case 68: //D
     case 100: //d
-        if(!crane.userData.move2) {
+        if(!crane.userData.move2 && !crane.userData.movingToContainer) {
             crane.userData.move2 = -1;  
             updateKeyDisplay('D', true);      
         }
         break;
     case 82: //R
     case 114: //r
-        if(!crane.userData.rotate2) {
+        if(!crane.userData.rotate2 && !crane.userData.movingToContainer) {
             crane.userData.rotate2 = 1;
             updateKeyDisplay('R', true);
         }
         break;
     case 70: //F
     case 102: //f
-        if(!crane.userData.rotate2) {
+        if(!crane.userData.rotate2 && !crane.userData.movingToContainer) {
             crane.userData.rotate2 = -1;
             updateKeyDisplay('F', true);
         }
