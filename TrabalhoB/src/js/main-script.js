@@ -7,7 +7,7 @@ var scene, renderer, clock;
 
 var geometry, mesh;
 
-var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere;
+var claw_sphere, cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere, dodecahedron_sphere;
 
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, moving_camera, shown_camera;
@@ -43,9 +43,7 @@ var tower_peak_height = 8;
 var trolley_height = 2;
 var cable_length = 8, cable_radius = 0.1;
 var hook_block_height = 2, hook_block_width = 3;
-var claw_size = 0.7;
 var container_height = 4, container_width = 0.1;
-
 
 /////////////////////
 /* _____SCENE_____ */
@@ -560,8 +558,8 @@ function createDodecaedronCargo(x, y, z) {
     mesh.position.set(0, 0.5, 0);
     obj.add(mesh);
 
-    icosahedron_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), 1); 
-    obj.add(icosahedron_sphere);
+    dodecahedron_sphere = createCollisionSphere(new THREE.Vector3(0, 0.5, 0), 1); 
+    obj.add(dodecahedron_sphere);
 
     scene.add(obj);
     obj.position.set(x, y, z);
@@ -614,7 +612,7 @@ function getRelativePosition(obj) {
 
 function checkCollisions() {
     'use strict';
-    var objects = [cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere];
+    var objects = [cube_sphere, torus_knot_sphere, torus_sphere, icosahedron_sphere, dodecahedron_sphere];
     
     if (objects && claw_sphere) { 
         var claw_position = getRelativePosition(claw_sphere); 
