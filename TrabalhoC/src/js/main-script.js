@@ -12,9 +12,10 @@ var material_cylinder = new THREE.MeshBasicMaterial({ color: 0x503C3C, wireframe
 var material_outer_ring = new THREE.MeshBasicMaterial({ color: 0xEAD8C0, wireframe: false });
 var material_middle_ring = new THREE.MeshBasicMaterial({ color: 0xD1BB9E, wireframe: false });
 var material_inner_ring = new THREE.MeshBasicMaterial({ color: 0xA79277, wireframe: false });
+var material_sky_dome = new THREE.MeshBasicMaterial({ color: 0x87CEEB, side: THREE.BackSide });
 
-var materials = [material_cylinder, material_outer_ring, material_middle_ring, material_inner_ring];
-var carousel, innerGroup, middleGroup, outerGroup;
+var materials = [material_cylinder, material_outer_ring, material_middle_ring, material_inner_ring, material_sky_dome];
+var carousel, innerGroup, middleGroup, outerGroup, skyDome;
 
 /* Relevant size values for axis and position of elements */
 var cylinder_height = 20, cylinder_radius = 5;
@@ -22,6 +23,7 @@ var ring_height = 1;
 var inner_ring_inner_radius = 5, inner_ring_outer_radius = 10;
 var middle_ring_inner_radius = 10, middle_ring_outer_radius = 15;
 var outer_ring_inner_radius = 15, outer_ring_outer_radius = 20;
+var sky_dome_radius = 50;
 
 var isAnimatingInnerRing = false;
 var isAnimatingMiddleRing = false;
@@ -41,6 +43,10 @@ function createScene(){
     scene.add(new THREE.AxesHelper(35));
 
     createCarousel(0,0,0);
+    createSkyDome(0,0,0);
+
+    createAmbientLight();
+    createGlobalLight();
 
     innerGroup.add(new THREE.AxesHelper(35));
     middleGroup.add(new THREE.AxesHelper(35));
@@ -109,6 +115,24 @@ function createAllCameras() {
 /////////////////////
 /* CREATE LIGHT(S) */
 /////////////////////
+function createAmbientLight() {
+    'use strict';
+
+    const ambientLight = new THREE.AmbientLight(0xFFA500, 1);
+    scene.add(ambientLight);
+}
+
+function createGlobalLight() {
+    'use strict';
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(100, 100, 100);
+    scene.add(directionalLight);
+
+    // Helper to visualize the light
+    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
+    scene.add(directionalLightHelper);
+}
 
 ////////////////////////
 /* CREATE OBJECT3D(S) */
@@ -250,12 +274,21 @@ function createCarousel(x, y, z) {
 
     carousel = new THREE.Object3D();
     addCylinder(carousel, 0, 0, 0);
-    createInnerGroup(carousel, 0, 0, 0);
-    createMiddleGroup(carousel, 0, 0, 0);
+    createInnerGroup(carousel, 0, -2, 0);
+    createMiddleGroup(carousel, 0, -1, 0);
     createOuterGroup(carousel, 0, 0, 0);
 
     scene.add(carousel);
     carousel.position.set(x, y, z);
+}
+
+function createSkyDome(x, y, z) {
+    'use strict';
+
+    const geometry = new THREE.SphereGeometry(sky_dome_radius, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+    skyDome = new THREE.Mesh(geometry, material_sky_dome);
+    skyDome.position.set(x, y - cylinder_height / 2, z);
+    scene.add(skyDome);
 }
 
 //////////////////////
@@ -283,6 +316,9 @@ function update(){
     var stepPerSecond = 0.1 * 60;
     var delta = clock.getDelta();
     var scaledStep = stepPerSecond * delta;
+    var rotationStep = stepPerSecond * Math.PI * delta * 0.03;
+
+    carousel.rotation.y += rotationStep;
 
     if (isAnimatingInnerRing) {
         // Move the inner ring up or down based on the animation direction
