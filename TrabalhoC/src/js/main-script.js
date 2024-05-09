@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+import * as Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 //////////////////////
 /* GLOBAL VARIABLES */
@@ -8,13 +12,30 @@ var scene, renderer, clock;
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, shown_camera;
 
-var material_cylinder = new THREE.MeshBasicMaterial({ color: 0x503C3C, wireframe: false });
-var material_outer_ring = new THREE.MeshBasicMaterial({ color: 0xEAD8C0, wireframe: false });
-var material_middle_ring = new THREE.MeshBasicMaterial({ color: 0xD1BB9E, wireframe: false });
-var material_inner_ring = new THREE.MeshBasicMaterial({ color: 0xA79277, wireframe: false });
+var figures = [];
+
+var material_lambert_cylinder = new THREE.MeshLambertMaterial({ color: 0x503C3C });
+var material_phong_cylinder = new THREE.MeshPhongMaterial({ color: 0x503C3C });
+var material_toon_cylinder = new THREE.MeshToonMaterial({ color: 0x503C3C });
+var material_normal_cylinder = new THREE.MeshNormalMaterial({ });
+
+var material_lambert_inner_ring = new THREE.MeshLambertMaterial({ color: 0xA79277 });
+var material_phong_inner_ring = new THREE.MeshPhongMaterial({ color: 0xA79277 });
+var material_toon_inner_ring = new THREE.MeshToonMaterial({ color: 0xA79277 });
+var material_normal_inner_ring = new THREE.MeshNormalMaterial({ });
+
+var material_lambert_middle_ring = new THREE.MeshLambertMaterial({ color: 0xD1BB9E });
+var material_phong_middle_ring = new THREE.MeshPhongMaterial({ color: 0xD1BB9E });
+var material_toon_middle_ring = new THREE.MeshToonMaterial({ color: 0xD1BB9E });
+var material_normal_middle_ring = new THREE.MeshNormalMaterial({ });
+
+var material_lambert_outer_ring = new THREE.MeshLambertMaterial({ color: 0xEAD8C0 });
+var material_phong_outer_ring = new THREE.MeshPhongMaterial({ color: 0xEAD8C0 });
+var material_toon_outer_ring = new THREE.MeshToonMaterial({ color: 0xEAD8C0 });
+var material_normal_outer_ring = new THREE.MeshNormalMaterial({ });
+
 var material_sky_dome = new THREE.MeshBasicMaterial({ color: 0x87CEEB, side: THREE.BackSide });
 
-var materials = [material_cylinder, material_outer_ring, material_middle_ring, material_inner_ring, material_sky_dome];
 var carousel, innerGroup, middleGroup, outerGroup, skyDome;
 
 /* Relevant size values for axis and position of elements */
@@ -153,12 +174,12 @@ function addCylinder(obj, x, y, z) {
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    var mesh = new THREE.Mesh(geometry, material_cylinder);
+    var mesh = new THREE.Mesh(geometry, material_lambert_cylinder);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
 
-function addRingAux(innerRadius, outerRadius, color, x, y, z) {
+function addRingAux(innerRadius, outerRadius, color) {
     'use strict';
 
     // Define the shape of the ring
@@ -191,31 +212,41 @@ function addRingAux(innerRadius, outerRadius, color, x, y, z) {
     return ring;
 }
 
-function addInnerRing(obj, x, y, z) {
+function addInnerRing(obj) {
     'use strict';
 
     var ring = addRingAux(inner_ring_inner_radius, inner_ring_outer_radius, 
-                material_inner_ring, x, y, z);
+                material_lambert_inner_ring);
 
     obj.add(ring);
 }
 
-function addMiddleRing(obj, x, y, z) {
+function addMiddleRing(obj) {
     'use strict';
 
     var ring = addRingAux(middle_ring_inner_radius, middle_ring_outer_radius, 
-                material_middle_ring, x, y, z);
+                material_lambert_middle_ring);
     
     obj.add(ring);
 }
 
-function addOuterRing(obj, x, y, z) {
+function addOuterRing(obj) {
     'use strict';
     
     var ring = addRingAux(outer_ring_inner_radius, outer_ring_outer_radius, 
-                material_outer_ring, x, y, z);
+                material_lambert_outer_ring);
 
     obj.add(ring);
+}
+
+function figura(obj, /* geometry, */ radius, angle) {
+    'use strict';
+
+    var geometry = new THREE.BoxGeometry(1, 1, 1);
+    var mesh = new THREE.Mesh(geometry, material_normal_cylinder);
+    mesh.position.set(Math.cos(angle)*radius, 1, Math.sin(angle)*radius);
+    obj.add(mesh);
+    figures.push(mesh);
 }
 
 function createInnerGroup(obj, x, y, z) {
@@ -224,13 +255,12 @@ function createInnerGroup(obj, x, y, z) {
     innerGroup = new THREE.Object3D();
     innerGroup.position.set(x, y, z);
 
-    addInnerRing(innerGroup, 0, 0, 0);
-    /*
-    figura1();
-    figura2();
-    figura3();
-    ...
-    */
+    addInnerRing(innerGroup);
+    for(var i = 0; i < 8; i++) {
+        figura(innerGroup, 
+               inner_ring_inner_radius + (inner_ring_outer_radius - inner_ring_inner_radius)/2, 
+               (Math.PI/4)*i);
+    }
 
    obj.add(innerGroup);
 }
@@ -241,13 +271,12 @@ function createMiddleGroup(obj, x, y, z) {
     middleGroup = new THREE.Object3D();
     middleGroup.position.set(x, y, z);
 
-    addMiddleRing(middleGroup, 0, 0, 0);
-    /*
-    figura1();
-    figura2();
-    figura3();
-    ...
-    */
+    addMiddleRing(middleGroup);
+    for(var i = 0; i < 8; i++) {
+        figura(middleGroup, 
+               middle_ring_inner_radius + (middle_ring_outer_radius - middle_ring_inner_radius)/2, 
+               (Math.PI/4)*i);
+    }
 
    obj.add(middleGroup);
 }
@@ -258,13 +287,13 @@ function createOuterGroup(obj, x, y, z) {
     outerGroup = new THREE.Object3D();
     outerGroup.position.set(x, y, z);
 
-    addOuterRing(outerGroup, 0, 0, 0);
-    /*
-    figura1();
-    figura2();
-    figura3();
-    ...
-    */
+    addOuterRing(outerGroup);
+    for(var i = 0; i < 8; i++) {
+        figura(outerGroup, 
+               outer_ring_inner_radius + (outer_ring_outer_radius - outer_ring_inner_radius)/2, 
+               (Math.PI/4)*i);
+    }
+    
 
    obj.add(outerGroup);
 }
@@ -320,6 +349,10 @@ function update(){
 
     carousel.rotation.y += rotationStep;
 
+    figures.forEach(figure => {
+        figure.rotation.y += rotationStep * 4;
+    });
+    
     if (isAnimatingInnerRing) {
         // Move the inner ring up or down based on the animation direction
         innerGroup.position.y += animationInnerDirection * scaledStep;
@@ -459,10 +492,38 @@ function onKeyDown(e) {
     case 53: //5
         shown_camera = fixed_persp_camera;
         break;
-    case 54: //6
-        materials.forEach(function (material) {
-            material.wireframe = !material.wireframe;
-        });
+    case 68: //D
+    case 100: //d
+        //ligar desligar luz direcional
+        break;
+    case 80: //P
+    case 112: //p
+        //ligar desligar luzes pontuais
+        break;
+    case 83: //S
+    case 115: //s
+        //ligar desligar luz spotlight
+        break;
+    case 81: //Q
+    case 113: //q
+        //tipo de sombreamento Gouraud (diffuse)
+        break;
+    case 87: //W
+    case 119: //w
+        //tipo de sombreamento Phong
+        break;
+    case 69: //E
+    case 101: //e
+        //tipo de sombreamento Cartoon
+        break;
+    case 82: //R
+    case 114: //r
+        //tipo de sombreamento NormalMap
+        break;
+    case 84: //T
+    case 116: //t
+        //activar e desactivar o cálculo da iluminação
+        break;
     }
 }
 

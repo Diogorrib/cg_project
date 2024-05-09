@@ -131,6 +131,7 @@ function createMovingCamera() {
 }
 
 function createAllCameras() {
+    'use strict';
     createFrontCamera();
     createLatCamera();
     createTopCamera();
@@ -363,6 +364,8 @@ function addClaw(obj, x, y, z, angle) {
 /////////////////////////////
 
 function createUpperGroup(obj, x, y, z) {
+    'use strict';
+
     upper_crane = new THREE.Object3D();
     upper_crane.position.set(x, y, z);
 
@@ -380,6 +383,8 @@ function createUpperGroup(obj, x, y, z) {
 }
 
 function createTrolleyGroup(obj, x, y, z) {
+    'use strict';
+
     trolley_group = new THREE.Object3D();
     trolley_group.position.set(x, y, z);
     addTrolley(trolley_group, 0, 0, 0);
@@ -388,6 +393,8 @@ function createTrolleyGroup(obj, x, y, z) {
 }
 
 function createCableGroup(obj, x, y, z) {
+    'use strict';
+
     cable_group = new THREE.Object3D();
     cable_group.position.set(x, y, z);
     addCable(cable_group, 0, 0, 0);
@@ -396,6 +403,8 @@ function createCableGroup(obj, x, y, z) {
 }
 
 function createClawGroup(obj, x, y, z) {
+    'use strict';
+
     claw_group = new THREE.Object3D();
     claw_group.position.set(x, y, z);
     addHookBlock(claw_group, 0, 0, 0);
@@ -580,7 +589,7 @@ function createCargo() {
 ////////////////////////////
 
 function createCollisionSphere(position, radius) {
-
+    'use strict';
     var sphere = new THREE.Object3D();
     
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -641,6 +650,7 @@ function handleCollisions() {
 }
 
 function cargoCollision(sphere) {
+    'use strict';
     var cargoObj = sphere.parent;
 
     claw_sphere.parent.add(cargoObj);
@@ -653,6 +663,7 @@ function cargoCollision(sphere) {
 
 /** Stop movement to process the animation */
 function stopUserMovements() {
+    'use strict';
     crane.userData.move1 = 0;
     crane.userData.move2 = 0;
     crane.userData.rotate1 = 0;
@@ -666,6 +677,7 @@ function stopUserMovements() {
 }
 
 function moveClawUp() {
+    'use strict';
     if (claw_group.position.y < -15) {
         crane.userData.move2 = 1;
     } else {
@@ -680,6 +692,7 @@ function moveClawUp() {
 }
 
 function moveClawDown() {
+    'use strict';
     if (claw_group.position.y > -25) {
         crane.userData.move2 = -1;
     } else {
@@ -690,6 +703,7 @@ function moveClawDown() {
 }
 
 function rotateCraneToContainer() {
+    'use strict';
     var actual_angle = crane.userData.rotation1 % (2 * Math.PI);
     if (actual_angle < 0) actual_angle += 2 * Math.PI;
 
@@ -707,6 +721,7 @@ function rotateCraneToContainer() {
 }
 
 function moveTrolleyToContainer() {
+    'use strict';
     var actual_position = getRelativePosition(trolley_group); 
     var target_position = (new THREE.Vector3(6, 0, 6));
     
@@ -725,6 +740,7 @@ function moveTrolleyToContainer() {
 /** Drop the cargo inside the container and
  * remove its sphere since it is already inside the container */
 function dropCargo() {
+    'use strict';
     var sphere = pendingCollisions.pop();   // collision handled (remove from pending)
     container.add(sphere.parent);
     sphere.parent.position.set(0, container_height/2, 0);
@@ -732,6 +748,7 @@ function dropCargo() {
 }
 
 function moveClawTowardsContainer() {
+    'use strict';
     if (crane.userData.stepsOfMovement == 0) {
         moveClawUp();
     } else if (crane.userData.stepsOfMovement == 1) {
@@ -1029,6 +1046,7 @@ function onKeyUp(e) {
 }
 
 function updateKeyDisplay(key, isActive) {
+    'use strict';
     var cell = document.getElementById('key-' + key);
     if (isActive) {
         cell.classList.add('key-active');
