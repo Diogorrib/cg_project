@@ -12,29 +12,16 @@ var scene, renderer, clock;
 var front_camera, lat_camera, top_camera, 
     fixed_ort_camera, fixed_persp_camera, shown_camera;
 
+var current_material;
+var material_lambert = new THREE.MeshLambertMaterial({ color: 0x503C3C });
+var material_phong = new THREE.MeshPhongMaterial({ color: 0x503C3C });
+var material_toon = new THREE.MeshToonMaterial({ color: 0x503C3C });
+var material_normal = new THREE.MeshNormalMaterial({ });
+
+var scene_objects = [];
 var figures = [];
 
-var material_lambert_cylinder = new THREE.MeshLambertMaterial({ color: 0x503C3C });
-var material_phong_cylinder = new THREE.MeshPhongMaterial({ color: 0x503C3C });
-var material_toon_cylinder = new THREE.MeshToonMaterial({ color: 0x503C3C });
-var material_normal_cylinder = new THREE.MeshNormalMaterial({ });
-
-var material_lambert_inner_ring = new THREE.MeshLambertMaterial({ color: 0xA79277 });
-var material_phong_inner_ring = new THREE.MeshPhongMaterial({ color: 0xA79277 });
-var material_toon_inner_ring = new THREE.MeshToonMaterial({ color: 0xA79277 });
-var material_normal_inner_ring = new THREE.MeshNormalMaterial({ });
-
-var material_lambert_middle_ring = new THREE.MeshLambertMaterial({ color: 0xD1BB9E });
-var material_phong_middle_ring = new THREE.MeshPhongMaterial({ color: 0xD1BB9E });
-var material_toon_middle_ring = new THREE.MeshToonMaterial({ color: 0xD1BB9E });
-var material_normal_middle_ring = new THREE.MeshNormalMaterial({ });
-
-var material_lambert_outer_ring = new THREE.MeshLambertMaterial({ color: 0xEAD8C0 });
-var material_phong_outer_ring = new THREE.MeshPhongMaterial({ color: 0xEAD8C0 });
-var material_toon_outer_ring = new THREE.MeshToonMaterial({ color: 0xEAD8C0 });
-var material_normal_outer_ring = new THREE.MeshNormalMaterial({ });
-
-var material_sky_dome = new THREE.MeshBasicMaterial({ color: 0x87CEEB, side: THREE.BackSide });
+var directionalGlobalLight, spotLights = [], mobiusSpotLight, mobiusPointLights = [];
 
 var carousel, innerGroup, middleGroup, outerGroup, skyDome;
 
@@ -64,7 +51,7 @@ function createScene(){
     scene.add(new THREE.AxesHelper(35));
 
     createCarousel(0,0,0);
-    createSkyDome(0,0,0);
+    //createSkyDome(0,0,0);
 
     createAmbientLight();
     createGlobalLight();
@@ -139,19 +126,19 @@ function createAllCameras() {
 function createAmbientLight() {
     'use strict';
 
-    const ambientLight = new THREE.AmbientLight(0xFFA500, 1);
+    var ambientLight = new THREE.AmbientLight(0xFFA500, 1);
     scene.add(ambientLight);
 }
 
 function createGlobalLight() {
     'use strict';
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(100, 100, 100);
-    scene.add(directionalLight);
+    directionalGlobalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalGlobalLight.position.set(100, 100, 100);
+    scene.add(directionalGlobalLight);
 
     // Helper to visualize the light
-    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
+    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalGlobalLight, 5);
     scene.add(directionalLightHelper);
 }
 
@@ -174,9 +161,10 @@ function addCylinder(obj, x, y, z) {
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    var mesh = new THREE.Mesh(geometry, material_lambert_cylinder);
+    var mesh = new THREE.Mesh(geometry, current_material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
+    scene_objects.push(mesh);
 }
 
 function addRingAux(innerRadius, outerRadius, color) {
@@ -216,37 +204,53 @@ function addInnerRing(obj) {
     'use strict';
 
     var ring = addRingAux(inner_ring_inner_radius, inner_ring_outer_radius, 
-                material_lambert_inner_ring);
+                current_material);
 
     obj.add(ring);
+    scene_objects.push(ring);
 }
 
 function addMiddleRing(obj) {
     'use strict';
 
     var ring = addRingAux(middle_ring_inner_radius, middle_ring_outer_radius, 
-                material_lambert_middle_ring);
+                current_material);
     
     obj.add(ring);
+    scene_objects.push(ring);
 }
 
 function addOuterRing(obj) {
     'use strict';
     
     var ring = addRingAux(outer_ring_inner_radius, outer_ring_outer_radius, 
-                material_lambert_outer_ring);
+                current_material);
 
     obj.add(ring);
+    scene_objects.push(ring);
 }
 
 function figura(obj, /* geometry, */ radius, angle) {
     'use strict';
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var mesh = new THREE.Mesh(geometry, material_normal_cylinder);
+    var mesh = new THREE.Mesh(geometry, current_material);
     mesh.position.set(Math.cos(angle)*radius, 1, Math.sin(angle)*radius);
+
+    //create a spotlight under the figure pointing up
+    var spotLight = new THREE.SpotLight(0xffffff, 100, 100, Math.PI/4, 0.5, 100);
+    spotLight.position.set(mesh.position.x, mesh.position.y - 1, mesh.position.z);
+    spotLight.target.position.set(mesh.position.x, mesh.position.y + 2, mesh.position.z);
+
+    spotLights.push(spotLight);
+
+    const directionalLightHelper = new THREE.DirectionalLightHelper(spotLight, 5);
+    scene.add(directionalLightHelper);
+    scene.add(spotLight.target);
+    obj.add(spotLight);
     obj.add(mesh);
     figures.push(mesh);
+    scene_objects.push(mesh);
 }
 
 function createInnerGroup(obj, x, y, z) {
@@ -315,9 +319,10 @@ function createSkyDome(x, y, z) {
     'use strict';
 
     const geometry = new THREE.SphereGeometry(sky_dome_radius, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    skyDome = new THREE.Mesh(geometry, material_sky_dome);
+    skyDome = new THREE.Mesh(geometry, current_material);
     skyDome.position.set(x, y - cylinder_height / 2, z);
     scene.add(skyDome);
+    scene_objects.push(skyDome);
 }
 
 //////////////////////
@@ -340,7 +345,7 @@ function handleCollisions(){
 /* UPDATE */
 ////////////
 function update(){
-    'use strict';
+    'use strict';   
 
     var stepPerSecond = 0.1 * 60;
     var delta = clock.getDelta();
@@ -384,6 +389,17 @@ function update(){
     }
 }
 
+//////////////////////
+/* UPDATE MATERIALS */
+//////////////////////
+function updateMaterials() {
+    'use strict';
+
+    scene_objects.forEach(obj => {
+        obj.material = current_material;
+    });
+}
+
 /////////////
 /* DISPLAY */
 /////////////
@@ -403,6 +419,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    current_material = material_lambert;
     clock = new THREE.Clock(true);
 
     createScene();
@@ -494,31 +511,37 @@ function onKeyDown(e) {
         break;
     case 68: //D
     case 100: //d
-        //ligar desligar luz direcional
+        directionalGlobalLight.visible = !directionalGlobalLight.visible;
         break;
     case 80: //P
     case 112: //p
-        //ligar desligar luzes pontuais
+        mobiusPointLights.forEach(light => {
+            light.visible = !light.visible;
+        });
         break;
     case 83: //S
     case 115: //s
-        //ligar desligar luz spotlight
+        mobiusSpotLight.visible = !mobiusSpotLight.visible;
         break;
     case 81: //Q
     case 113: //q
-        //tipo de sombreamento Gouraud (diffuse)
+        current_material = material_lambert;
+        updateMaterials();
         break;
     case 87: //W
     case 119: //w
-        //tipo de sombreamento Phong
+        current_material = material_phong;
+        updateMaterials();
         break;
     case 69: //E
     case 101: //e
-        //tipo de sombreamento Cartoon
+        current_material = material_toon;
+        updateMaterials();
         break;
     case 82: //R
     case 114: //r
-        //tipo de sombreamento NormalMap
+        current_material = material_normal;
+        updateMaterials();
         break;
     case 84: //T
     case 116: //t
@@ -526,7 +549,6 @@ function onKeyDown(e) {
         break;
     }
 }
-
 
 ///////////////////////
 /* KEY UP CALLBACK */
