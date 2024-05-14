@@ -55,7 +55,8 @@ function createScene(){
 
     createCarousel(0,0,0);
     //createSkyDome(0,0,0);
-    createMobius(0,15,0);
+    createMobius();
+    createMobius2();
 
     createAmbientLight();
     createGlobalLight();
@@ -259,17 +260,51 @@ function addOuterRing(obj) {
 /////////////////
 
 //create 8 variables of different figures using parametric geometry
-let geometries = [];
+var geometries = [];
 
-var aaaaaaaaaaaaaaaa = new THREE.TetrahedronGeometry(1);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
-geometries.push(aaaaaaaaaaaaaaaa);
+function hiperboloide(u, v, target) {
+    const a = 1; // semi-eixo x
+    const b = 1; // semi-eixo y
+    const c = 1; // semi-eixo z
+    const x = a * Math.cosh(v) * Math.cos(u);
+    const y = b * Math.cosh(v) * Math.sin(u);
+    const z = c * Math.sinh(v);
+
+    target.set(x, y, z);
+}
+
+function parabolicSurface(u, v, target) {
+    const x = u;
+    const y = v;
+    const z = 0.5 * x * x + 0.5 * y * y; // Equação da superfície parabólica
+    target.set(x, y, z);
+}
+
+var f1 = new ParametricGeometry(hiperboloide, 10, Math.PI);
+geometries.push(f1);
+
+var f2 = new ParametricGeometry(parabolicSurface, 1, 1);
+geometries.push(f2);
+
+var f3 = new ParametricGeometry( ParametricGeometries.sphere, 2, 2);
+geometries.push(f3);
+
+var f4 = new ParametricGeometry( ParametricGeometries.torus, 2, 2);
+geometries.push(f4);
+
+var f5 = new ParametricGeometry( ParametricGeometries.torusKnot, 2, 2);
+geometries.push(f5);
+
+var f6 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
+geometries.push(f6);
+
+var f7 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
+geometries.push(f7);
+
+var f8 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
+geometries.push(f8);
+
+
 
 /* let torus = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20, 2, 3);
 let sphere = new ParametricGeometries.SphereGeometry(50, 20, 10);
@@ -397,7 +432,7 @@ function createSkyDome(x, y, z) {
 ////////////////
 /* __MOBIUS__ */
 ////////////////
-function createMobius(x, y, z) {
+function createMobius() {
     'use strict';
 
     const geometry = new THREE.BufferGeometry();
@@ -408,8 +443,79 @@ function createMobius(x, y, z) {
     const radius = 10;       // Radius of the strip's central circle
     const width = 2;         // Width of the strip
 
+    var placelights = [];
+    for (let i = 0; i < 8; i++) {
+        placelights.push((i/8)*numSegments);
+    }
+    var niggamobius = new THREE.Object3D();
+
     // Generate vertices and indices for the Möbius strip
     for (let i = 0; i <= numSegments; i++) {
+        const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
+        var placed = false;
+        for (let j = -1; j <= 1; j += 2) { // j flips between -1 and 1 for the two sides of the strip
+            const phi = theta / 2; // Half twist distributed over the entire loop
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = radius * cosTheta + j * width * cosTheta * cosPhi;
+            const y = radius * sinTheta + j * width * sinTheta * cosPhi;
+            const z = j * width * sinPhi;
+
+            if (!placed && placelights.includes(i)) {
+                const mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+                mobiusPointLight.position.set(radius * cosTheta, radius * sinTheta, 0);
+                niggamobius.add(mobiusPointLight);
+                placed = true;
+            }
+
+            vertices.push(x, y, z);
+        }
+
+        // Defining two triangles per segment
+        if (i > 0) {
+            const a = 2 * i - 2;  // vertex index at start of this segment
+            const b = 2 * i - 1;  // vertex index at start of other side of this segment
+            const c = 2 * i;      // vertex index at end of this segment
+            const d = 2 * i + 1;  // vertex index at end of other side of this segment
+            indices.push(a, b, c, b, d, c); // two triangles per segment
+        }
+    }
+
+    // Connecting the last segment to the first to create a true Möbius strip
+    indices.push(0, 1, 2 * numSegments, 1, 2 * numSegments + 1, 2 * numSegments);
+
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+
+    const mobiusMesh = new THREE.Mesh(geometry, current_material);
+
+    niggamobius.add(mobiusMesh);
+    niggamobius.position.set(0, 15, 0);
+    niggamobius.rotation.x = Math.PI /2;
+
+    scene.add(niggamobius);
+    scene_objects.push(niggamobius);
+}
+
+function createMobius2() {
+    'use strict';
+
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+    const indices = [];
+
+    const numSegments = 200; // Number of segments for a smoother curve
+    const radius = 10;       // Radius of the strip's central circle
+    const width = 2;         // Width of the strip
+
+    var niggamobius = new THREE.Object3D();
+
+    // Generate vertices and indices for the Möbius strip
+    for (let i = numSegments; i >= 0; i--) {
         const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
         for (let j = -1; j <= 1; j += 2) { // j flips between -1 and 1 for the two sides of the strip
             const phi = theta / 2; // Half twist distributed over the entire loop
@@ -443,14 +549,14 @@ function createMobius(x, y, z) {
     geometry.computeVertexNormals();
 
     const mobiusMesh = new THREE.Mesh(geometry, current_material);
-    mobiusMesh.rotation.y = Math.PI/2;
-    scene_objects.push(mobiusMesh);
+    
+    niggamobius.add(mobiusMesh);
+    niggamobius.position.set(0, 15, 0);
+    niggamobius.rotation.x = Math.PI /2;
 
-    mobiusMesh.position.set(0, 15, 0);
-
-    scene.add(mobiusMesh);
+    scene.add(niggamobius);
+    scene_objects.push(niggamobius);
 }
-
 
 //////////////////////
 /* CHECK COLLISIONS */
