@@ -4,6 +4,9 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import * as Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
+import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
+import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometries.js';
+
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
@@ -21,7 +24,7 @@ var material_normal = new THREE.MeshNormalMaterial({ });
 var scene_objects = [];
 var figures = [];
 
-var directionalGlobalLight, spotLights = [], mobiusSpotLight, mobiusPointLights = [];
+var ambientLight, directionalGlobalLight, spotLights = [], mobiusPointLights = [];
 
 var carousel, innerGroup, middleGroup, outerGroup, skyDome;
 
@@ -40,9 +43,9 @@ var animationInnerDirection = 1;
 var animationMiddleDirection = 1;
 var animationOuterDirection = 1;
 
-/////////////////////
-/* CREATE SCENE(S) */
-/////////////////////
+///////////////////////
+/* __CREATE__SCENE__ */
+///////////////////////
 function createScene(){
     'use strict';
 
@@ -52,6 +55,7 @@ function createScene(){
 
     createCarousel(0,0,0);
     //createSkyDome(0,0,0);
+    createMobius(0,15,0);
 
     createAmbientLight();
     createGlobalLight();
@@ -61,9 +65,9 @@ function createScene(){
     outerGroup.add(new THREE.AxesHelper(35));
 }
 
-//////////////////////
-/* CREATE CAMERA(S) */
-//////////////////////
+////////////////////////
+/* __CREATE__CAMERA__ */
+////////////////////////
 function createFrontCamera() {
     'use strict';
     front_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
@@ -90,7 +94,7 @@ function createTopCamera() {
                                               window.innerWidth / 30,
                                               window.innerHeight / 30,
                                               -window.innerHeight / 30);
-    top_camera.position.set(0, 100, 0);
+    top_camera.position.set(0,  100, 0);
     top_camera.lookAt(scene.position);
 }
 
@@ -120,13 +124,13 @@ function createAllCameras() {
     createFixedPerspectiveCamera();
 }
 
-/////////////////////
-/* CREATE LIGHT(S) */
-/////////////////////
+////////////////////////
+/* __CREATE__LIGHTS__ */
+////////////////////////
 function createAmbientLight() {
     'use strict';
 
-    var ambientLight = new THREE.AmbientLight(0xFFA500, 1);
+    ambientLight = new THREE.AmbientLight(0xFFA500, 1);
     scene.add(ambientLight);
 }
 
@@ -142,10 +146,26 @@ function createGlobalLight() {
     scene.add(directionalLightHelper);
 }
 
+function createSpotLight(obj, mesh) {
+    var spotLight = new THREE.SpotLight(0xffffff, 100, 3, Math.PI/3);
+    spotLight.position.set(mesh.position.x, mesh.position.y - 1, mesh.position.z);
+    spotLight.target = mesh;
+
+    spotLights.push(spotLight);
+
+    const SpotLightHelper = new THREE.SpotLightHelper(spotLight, 2);
+    obj.add(SpotLightHelper);
+    obj.add(spotLight.target);
+    obj.add(spotLight);
+}
+
 ////////////////////////
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
+////////////////////////
+/* __BASE__CYLINDER__ */
+////////////////////////
 function addCylinder(obj, x, y, z) {
     'use strict';
 
@@ -166,6 +186,10 @@ function addCylinder(obj, x, y, z) {
     obj.add(mesh);
     scene_objects.push(mesh);
 }
+
+///////////////
+/* __RINGS__ */
+///////////////
 
 function addRingAux(innerRadius, outerRadius, color) {
     'use strict';
@@ -230,28 +254,66 @@ function addOuterRing(obj) {
     scene_objects.push(ring);
 }
 
-function figura(obj, /* geometry, */ radius, angle) {
+/////////////////
+/* __FIGURES__ */
+/////////////////
+
+//create 8 variables of different figures using parametric geometry
+let geometries = [];
+
+var aaaaaaaaaaaaaaaa = new THREE.TetrahedronGeometry(1);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+geometries.push(aaaaaaaaaaaaaaaa);
+
+/* let torus = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20, 2, 3);
+let sphere = new ParametricGeometries.SphereGeometry(50, 20, 10);
+let sphere1 = new ParametricGeometries.SphereGeometry(50, 20, 10);
+let torusKnot = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20);
+let torusKnot1 = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20);
+let klein = new ParametricGeometries.Klein();
+let plane = new ParametricGeometries.PlaneGeometry(50, 50, 10, 10);
+let plane1 = new ParametricGeometries.PlaneGeometry(50, 50, 10, 10);
+
+torus = new THREE.BufferGeometry().fromGeometry(torus);
+geometries.push(torus);
+sphere = new THREE.BufferGeometry().fromGeometry(sphere);
+geometries.push(sphere);
+sphere1 = new THREE.BufferGeometry().fromGeometry(sphere1);
+geometries.push(sphere1);
+torusKnot = new THREE.BufferGeometry().fromGeometry(torusKnot);
+geometries.push(torusKnot);
+torusKnot1 = new THREE.BufferGeometry().fromGeometry(torusKnot1);
+geometries.push(torusKnot1);
+klein = new THREE.BufferGeometry().fromGeometry(klein);
+geometries.push(klein);
+plane = new THREE.BufferGeometry().fromGeometry(plane);
+geometries.push(plane);
+plane1 = new THREE.BufferGeometry().fromGeometry(plane1);
+geometries.push(plane1); */
+
+
+function createFigure(obj, geometry, radius, angle) {
     'use strict';
 
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
     var mesh = new THREE.Mesh(geometry, current_material);
     mesh.position.set(Math.cos(angle)*radius, 1, Math.sin(angle)*radius);
 
-    //create a spotlight under the figure pointing up
-    var spotLight = new THREE.SpotLight(0xffffff, 100, 100, Math.PI/4, 0.5, 100);
-    spotLight.position.set(mesh.position.x, mesh.position.y - 1, mesh.position.z);
-    spotLight.target.position.set(mesh.position.x, mesh.position.y + 2, mesh.position.z);
+    createSpotLight(obj, mesh);
 
-    spotLights.push(spotLight);
-
-    const directionalLightHelper = new THREE.DirectionalLightHelper(spotLight, 5);
-    scene.add(directionalLightHelper);
-    scene.add(spotLight.target);
-    obj.add(spotLight);
     obj.add(mesh);
     figures.push(mesh);
     scene_objects.push(mesh);
 }
+
+///////////////////////
+/* __RINGS__GROUPS__ */
+///////////////////////
 
 function createInnerGroup(obj, x, y, z) {
     'use strict';
@@ -261,7 +323,8 @@ function createInnerGroup(obj, x, y, z) {
 
     addInnerRing(innerGroup);
     for(var i = 0; i < 8; i++) {
-        figura(innerGroup, 
+        createFigure(innerGroup,
+               geometries[i],
                inner_ring_inner_radius + (inner_ring_outer_radius - inner_ring_inner_radius)/2, 
                (Math.PI/4)*i);
     }
@@ -277,7 +340,8 @@ function createMiddleGroup(obj, x, y, z) {
 
     addMiddleRing(middleGroup);
     for(var i = 0; i < 8; i++) {
-        figura(middleGroup, 
+        createFigure(middleGroup,
+               geometries[i],
                middle_ring_inner_radius + (middle_ring_outer_radius - middle_ring_inner_radius)/2, 
                (Math.PI/4)*i);
     }
@@ -293,7 +357,8 @@ function createOuterGroup(obj, x, y, z) {
 
     addOuterRing(outerGroup);
     for(var i = 0; i < 8; i++) {
-        figura(outerGroup, 
+        createFigure(outerGroup,
+               geometries[i],
                outer_ring_inner_radius + (outer_ring_outer_radius - outer_ring_inner_radius)/2, 
                (Math.PI/4)*i);
     }
@@ -301,6 +366,10 @@ function createOuterGroup(obj, x, y, z) {
 
    obj.add(outerGroup);
 }
+
+/////////////////////
+/* __GROUPS__ALL__ */
+/////////////////////
 
 function createCarousel(x, y, z) {
     'use strict';
@@ -324,6 +393,64 @@ function createSkyDome(x, y, z) {
     scene.add(skyDome);
     scene_objects.push(skyDome);
 }
+
+////////////////
+/* __MOBIUS__ */
+////////////////
+function createMobius(x, y, z) {
+    'use strict';
+
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+    const indices = [];
+
+    const numSegments = 200; // Number of segments for a smoother curve
+    const radius = 10;       // Radius of the strip's central circle
+    const width = 2;         // Width of the strip
+
+    // Generate vertices and indices for the Möbius strip
+    for (let i = 0; i <= numSegments; i++) {
+        const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
+        for (let j = -1; j <= 1; j += 2) { // j flips between -1 and 1 for the two sides of the strip
+            const phi = theta / 2; // Half twist distributed over the entire loop
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = radius * cosTheta + j * width * cosTheta * cosPhi;
+            const y = radius * sinTheta + j * width * sinTheta * cosPhi;
+            const z = j * width * sinPhi;
+
+            vertices.push(x, y, z);
+        }
+
+        // Defining two triangles per segment
+        if (i > 0) {
+            const a = 2 * i - 2;  // vertex index at start of this segment
+            const b = 2 * i - 1;  // vertex index at start of other side of this segment
+            const c = 2 * i;      // vertex index at end of this segment
+            const d = 2 * i + 1;  // vertex index at end of other side of this segment
+            indices.push(a, b, c, b, d, c); // two triangles per segment
+        }
+    }
+
+    // Connecting the last segment to the first to create a true Möbius strip
+    indices.push(0, 1, 2 * numSegments, 1, 2 * numSegments + 1, 2 * numSegments);
+
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+
+    const mobiusMesh = new THREE.Mesh(geometry, current_material);
+    mobiusMesh.rotation.y = Math.PI/2;
+    scene_objects.push(mobiusMesh);
+
+    mobiusMesh.position.set(0, 15, 0);
+
+    scene.add(mobiusMesh);
+}
+
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -353,6 +480,8 @@ function update(){
     var rotationStep = stepPerSecond * Math.PI * delta * 0.03;
 
     carousel.rotation.y += rotationStep;
+
+    updateMaterials();
 
     figures.forEach(figure => {
         figure.rotation.y += rotationStep * 4;
@@ -427,7 +556,6 @@ function init() {
 
     shown_camera = top_camera;
     
-    render();
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 }
@@ -521,31 +649,36 @@ function onKeyDown(e) {
         break;
     case 83: //S
     case 115: //s
-        mobiusSpotLight.visible = !mobiusSpotLight.visible;
+        spotLights.forEach(light => {
+            light.visible = !light.visible;
+        });
         break;
     case 81: //Q
     case 113: //q
         current_material = material_lambert;
-        updateMaterials();
         break;
     case 87: //W
     case 119: //w
         current_material = material_phong;
-        updateMaterials();
         break;
     case 69: //E
     case 101: //e
         current_material = material_toon;
-        updateMaterials();
         break;
     case 82: //R
     case 114: //r
         current_material = material_normal;
-        updateMaterials();
         break;
     case 84: //T
     case 116: //t
-        //activar e desactivar o cálculo da iluminação
+        ambientLight.visible = !ambientLight.visible;
+        directionalGlobalLight.visible = !directionalGlobalLight.visible;
+        /* spotLights.forEach(light => {
+            light.visible = !light.visible;
+        }); */
+        /* mobiusPointLights.forEach(light => {
+            light.visible = !light.visible;
+        }); */
         break;
     }
 }
