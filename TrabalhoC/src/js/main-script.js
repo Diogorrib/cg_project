@@ -55,8 +55,7 @@ function createScene(){
 
     createCarousel(0,0,0);
     //createSkyDome(0,0,0);
-    createMobius();
-    createMobius2();
+    createMobius(0, 15, 0);
 
     createAmbientLight();
     createGlobalLight();
@@ -432,47 +431,40 @@ function createSkyDome(x, y, z) {
 ////////////////
 /* __MOBIUS__ */
 ////////////////
-function createMobius() {
+function generateMobiusVertices(obj, vertices, indices) {
     'use strict';
 
-    const geometry = new THREE.BufferGeometry();
-    const vertices = [];
-    const indices = [];
-
-    const numSegments = 200; // Number of segments for a smoother curve
+    const numSegments = 80; // Number of segments for a smoother curve
     const radius = 10;       // Radius of the strip's central circle
     const width = 2;         // Width of the strip
 
     var placelights = [];
-    for (let i = 0; i < 8; i++) {
+    for (var i = 0; i < 8; i++) {
         placelights.push((i/8)*numSegments);
     }
-    var niggamobius = new THREE.Object3D();
 
     // Generate vertices and indices for the Möbius strip
-    for (let i = 0; i <= numSegments; i++) {
+    for (var i = 0; i <= numSegments; i++) {
         const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
         var placed = false;
-        for (let j = -1; j <= 1; j += 2) { // j flips between -1 and 1 for the two sides of the strip
+        [-1, 1].forEach(j => { // j flips between -1 and 1 for the two sides of the strip
             const phi = theta / 2; // Half twist distributed over the entire loop
-            const sinTheta = Math.sin(theta);
-            const cosTheta = Math.cos(theta);
-            const sinPhi = Math.sin(phi);
-            const cosPhi = Math.cos(phi);
 
-            const x = radius * cosTheta + j * width * cosTheta * cosPhi;
-            const y = radius * sinTheta + j * width * sinTheta * cosPhi;
-            const z = j * width * sinPhi;
-
-            if (!placed && placelights.includes(i)) {
-                const mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
-                mobiusPointLight.position.set(radius * cosTheta, radius * sinTheta, 0);
-                niggamobius.add(mobiusPointLight);
-                placed = true;
-            }
-
+            const x = radius * Math.cos(theta) + j * width * Math.cos(theta) * Math.cos(phi);
+            const y = radius * Math.sin(theta) + j * width * Math.sin(theta) * Math.cos(phi);
+            const z = j * width * Math.sin(phi);
             vertices.push(x, y, z);
-        }
+            
+            if (!placed && placelights.includes(i)) {
+                placed = true;
+                var mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+                mobiusPointLight.position.set(radius * Math.cos(theta), radius * Math.sin(theta), 0);
+                obj.add(mobiusPointLight);
+
+                var pointLightHelper = new THREE.PointLightHelper(mobiusPointLight, 1);
+                scene.add(pointLightHelper);
+            }
+        });
 
         // Defining two triangles per segment
         if (i > 0) {
@@ -486,76 +478,52 @@ function createMobius() {
 
     // Connecting the last segment to the first to create a true Möbius strip
     indices.push(0, 1, 2 * numSegments, 1, 2 * numSegments + 1, 2 * numSegments);
-
-    geometry.setIndex(indices);
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geometry.computeVertexNormals();
-
-    const mobiusMesh = new THREE.Mesh(geometry, current_material);
-
-    niggamobius.add(mobiusMesh);
-    niggamobius.position.set(0, 15, 0);
-    niggamobius.rotation.x = Math.PI /2;
-
-    scene.add(niggamobius);
-    scene_objects.push(niggamobius);
 }
 
-function createMobius2() {
+function addMobiusStrip(obj, vertices, indices) {
     'use strict';
 
-    const geometry = new THREE.BufferGeometry();
-    const vertices = [];
-    const indices = [];
-
-    const numSegments = 200; // Number of segments for a smoother curve
-    const radius = 10;       // Radius of the strip's central circle
-    const width = 2;         // Width of the strip
-
-    var niggamobius = new THREE.Object3D();
-
-    // Generate vertices and indices for the Möbius strip
-    for (let i = numSegments; i >= 0; i--) {
-        const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
-        for (let j = -1; j <= 1; j += 2) { // j flips between -1 and 1 for the two sides of the strip
-            const phi = theta / 2; // Half twist distributed over the entire loop
-            const sinTheta = Math.sin(theta);
-            const cosTheta = Math.cos(theta);
-            const sinPhi = Math.sin(phi);
-            const cosPhi = Math.cos(phi);
-
-            const x = radius * cosTheta + j * width * cosTheta * cosPhi;
-            const y = radius * sinTheta + j * width * sinTheta * cosPhi;
-            const z = j * width * sinPhi;
-
-            vertices.push(x, y, z);
-        }
-
-        // Defining two triangles per segment
-        if (i > 0) {
-            const a = 2 * i - 2;  // vertex index at start of this segment
-            const b = 2 * i - 1;  // vertex index at start of other side of this segment
-            const c = 2 * i;      // vertex index at end of this segment
-            const d = 2 * i + 1;  // vertex index at end of other side of this segment
-            indices.push(a, b, c, b, d, c); // two triangles per segment
-        }
-    }
-
-    // Connecting the last segment to the first to create a true Möbius strip
-    indices.push(0, 1, 2 * numSegments, 1, 2 * numSegments + 1, 2 * numSegments);
+    var geometry = new THREE.BufferGeometry();
 
     geometry.setIndex(indices);
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
 
-    const mobiusMesh = new THREE.Mesh(geometry, current_material);
-    
-    niggamobius.add(mobiusMesh);
-    niggamobius.position.set(0, 15, 0);
-    niggamobius.rotation.x = Math.PI /2;
+    var mobiusMesh = new THREE.Mesh(geometry, current_material);
 
-    scene.add(niggamobius);
-    scene_objects.push(niggamobius);
+    obj.add(mobiusMesh);
+    scene_objects.push(mobiusMesh);
+}
+
+function createMobius(x, y, z) {
+    'use strict';
+
+    var vertices = [];
+    var indices = [];
+
+    var mobiusStrip = new THREE.Object3D();
+    mobiusStrip.position.set(x, y, z);
+    mobiusStrip.rotation.x = Math.PI /2;
+
+    generateMobiusVertices(mobiusStrip, vertices, indices);
+
+    var reversedVertices = [];
+    var reversedIndices = [];
+    for (var i = 0; i < vertices.length; i += 6) {
+        for (var j = 5; j >= 0; j--) {
+            reversedVertices.unshift(vertices[i+j]);
+        }
+    }
+    for (var i = 0; i < indices.length; i += 6) {
+        for (var j = 5; j >= 0; j--) {
+            reversedIndices.unshift(indices[i+j]);
+        }
+    }
+
+    addMobiusStrip(mobiusStrip, vertices, indices);
+    addMobiusStrip(mobiusStrip, reversedVertices, reversedIndices);
+
+    scene.add(mobiusStrip);
 }
 
 //////////////////////
