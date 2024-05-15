@@ -16,15 +16,17 @@ var front_camera, lat_camera, top_camera,
     fixed_ort_camera, fixed_persp_camera, shown_camera;
 
 var current_material;
-var material_lambert = new THREE.MeshLambertMaterial({ color: 0x503C3C });
-var material_phong = new THREE.MeshPhongMaterial({ color: 0x503C3C });
-var material_toon = new THREE.MeshToonMaterial({ color: 0x503C3C });
-var material_normal = new THREE.MeshNormalMaterial({ });
+var material_lambert = new THREE.MeshLambertMaterial({ color: 0x503C3C, side: THREE.DoubleSide }); // DOUBLE SIDE NEEDED?
+var material_phong = new THREE.MeshPhongMaterial({ color: 0x503C3C, side: THREE.DoubleSide });  // DOUBLE SIDE NEEDED?
+var material_toon = new THREE.MeshToonMaterial({ color: 0x503C3C, side: THREE.DoubleSide });    // DOUBLE SIDE NEEDED?
+var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });              // DOUBLE SIDE NEEDED?
 
 var scene_objects = [];
 var figures = [];
+var geometries = [];
 
 var ambientLight, directionalGlobalLight, spotLights = [], mobiusPointLights = [];
+var toCalcLights = true;
 
 var carousel, innerGroup, middleGroup, outerGroup, skyDome;
 
@@ -117,6 +119,7 @@ function createFixedPerspectiveCamera() {
 }
 
 function createAllCameras() {
+    'use strict';
     createFrontCamera();
     createLatCamera();
     createTopCamera();
@@ -147,6 +150,8 @@ function createGlobalLight() {
 }
 
 function createSpotLight(obj, mesh) {
+    'use strict';
+
     var spotLight = new THREE.SpotLight(0xffffff, 100, 3, Math.PI/3);
     spotLight.position.set(mesh.position.x, mesh.position.y - 1, mesh.position.z);
     spotLight.target = mesh;
@@ -258,79 +263,25 @@ function addOuterRing(obj) {
 /* __FIGURES__ */
 /////////////////
 
-//create 8 variables of different figures using parametric geometry
-var geometries = [];
+var hyperboloidOneSheet = function (u, v, target) {
+    'use strict';
 
-function hiperboloide(u, v, target) {
-    const a = 1; // semi-eixo x
-    const b = 1; // semi-eixo y
-    const c = 1; // semi-eixo z
-    const x = a * Math.cosh(v) * Math.cos(u);
-    const y = b * Math.cosh(v) * Math.sin(u);
-    const z = c * Math.sinh(v);
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = 3 * (v - 0.5);  // v goes from -3 to 3, adjust range as needed for the height
+    const x = Math.cosh(v) * Math.cos(u);
+    const y = Math.cosh(v) * Math.sin(u);
+    const z = Math.sinh(v);
 
     target.set(x, y, z);
 }
 
-function parabolicSurface(u, v, target) {
-    const x = u;
-    const y = v;
-    const z = 0.5 * x * x + 0.5 * y * y; // Equação da superfície parabólica
-    target.set(x, y, z);
+function createParametricGeometries() {
+    'use strict';
+
+    for (var i = 0; i < 8; i++) {
+        geometries.push(new ParametricGeometry(hyperboloidOneSheet, 10, 10));
+    }
 }
-
-var f1 = new ParametricGeometry(hiperboloide, 10, Math.PI);
-geometries.push(f1);
-
-var f2 = new ParametricGeometry(parabolicSurface, 1, 1);
-geometries.push(f2);
-
-var f3 = new ParametricGeometry( ParametricGeometries.sphere, 2, 2);
-geometries.push(f3);
-
-var f4 = new ParametricGeometry( ParametricGeometries.torus, 2, 2);
-geometries.push(f4);
-
-var f5 = new ParametricGeometry( ParametricGeometries.torusKnot, 2, 2);
-geometries.push(f5);
-
-var f6 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
-geometries.push(f6);
-
-var f7 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
-geometries.push(f7);
-
-var f8 = new ParametricGeometry( ParametricGeometries.klein, 2, 2);
-geometries.push(f8);
-
-
-
-/* let torus = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20, 2, 3);
-let sphere = new ParametricGeometries.SphereGeometry(50, 20, 10);
-let sphere1 = new ParametricGeometries.SphereGeometry(50, 20, 10);
-let torusKnot = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20);
-let torusKnot1 = new ParametricGeometries.TorusKnotGeometry(50, 10, 50, 20);
-let klein = new ParametricGeometries.Klein();
-let plane = new ParametricGeometries.PlaneGeometry(50, 50, 10, 10);
-let plane1 = new ParametricGeometries.PlaneGeometry(50, 50, 10, 10);
-
-torus = new THREE.BufferGeometry().fromGeometry(torus);
-geometries.push(torus);
-sphere = new THREE.BufferGeometry().fromGeometry(sphere);
-geometries.push(sphere);
-sphere1 = new THREE.BufferGeometry().fromGeometry(sphere1);
-geometries.push(sphere1);
-torusKnot = new THREE.BufferGeometry().fromGeometry(torusKnot);
-geometries.push(torusKnot);
-torusKnot1 = new THREE.BufferGeometry().fromGeometry(torusKnot1);
-geometries.push(torusKnot1);
-klein = new THREE.BufferGeometry().fromGeometry(klein);
-geometries.push(klein);
-plane = new THREE.BufferGeometry().fromGeometry(plane);
-geometries.push(plane);
-plane1 = new THREE.BufferGeometry().fromGeometry(plane1);
-geometries.push(plane1); */
-
 
 function createFigure(obj, geometry, radius, angle) {
     'use strict';
@@ -396,7 +347,6 @@ function createOuterGroup(obj, x, y, z) {
                outer_ring_inner_radius + (outer_ring_outer_radius - outer_ring_inner_radius)/2, 
                (Math.PI/4)*i);
     }
-    
 
    obj.add(outerGroup);
 }
@@ -410,6 +360,7 @@ function createCarousel(x, y, z) {
 
     carousel = new THREE.Object3D();
     addCylinder(carousel, 0, 0, 0);
+    createParametricGeometries();
     createInnerGroup(carousel, 0, -2, 0);
     createMiddleGroup(carousel, 0, -1, 0);
     createOuterGroup(carousel, 0, 0, 0);
@@ -446,7 +397,7 @@ function generateMobiusVertices(obj, vertices, indices) {
     // Generate vertices and indices for the Möbius strip
     for (var i = 0; i <= numSegments; i++) {
         const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
-        var placed = false;
+        
         [-1, 1].forEach(j => { // j flips between -1 and 1 for the two sides of the strip
             const phi = theta / 2; // Half twist distributed over the entire loop
 
@@ -454,17 +405,17 @@ function generateMobiusVertices(obj, vertices, indices) {
             const y = radius * Math.sin(theta) + j * width * Math.sin(theta) * Math.cos(phi);
             const z = j * width * Math.sin(phi);
             vertices.push(x, y, z);
-            
-            if (!placed && placelights.includes(i)) {
-                placed = true;
-                var mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
-                mobiusPointLight.position.set(radius * Math.cos(theta), radius * Math.sin(theta), 0);
-                obj.add(mobiusPointLight);
-
-                var pointLightHelper = new THREE.PointLightHelper(mobiusPointLight, 1);
-                scene.add(pointLightHelper);
-            }
         });
+
+        if (placelights.includes(i)) {
+            var mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+            mobiusPointLight.position.set(radius * Math.cos(theta), radius * Math.sin(theta), 0);
+            obj.add(mobiusPointLight);
+            mobiusPointLights.push(mobiusPointLight);
+
+            var pointLightHelper = new THREE.PointLightHelper(mobiusPointLight, 1);
+            scene.add(pointLightHelper);
+        }
 
         // Defining two triangles per segment
         if (i > 0) {
@@ -498,8 +449,8 @@ function addMobiusStrip(obj, vertices, indices) {
 function createMobius(x, y, z) {
     'use strict';
 
-    var vertices = [];
-    var indices = [];
+    var vertices = [], reversedVertices = [];
+    var indices = [], reversedIndices = [];
 
     var mobiusStrip = new THREE.Object3D();
     mobiusStrip.position.set(x, y, z);
@@ -507,9 +458,7 @@ function createMobius(x, y, z) {
 
     generateMobiusVertices(mobiusStrip, vertices, indices);
 
-    var reversedVertices = [];
-    var reversedIndices = [];
-    for (var i = 0; i < vertices.length; i += 6) {
+    /* for (var i = 0; i < vertices.length; i += 6) {
         for (var j = 5; j >= 0; j--) {
             reversedVertices.unshift(vertices[i+j]);
         }
@@ -518,28 +467,12 @@ function createMobius(x, y, z) {
         for (var j = 5; j >= 0; j--) {
             reversedIndices.unshift(indices[i+j]);
         }
-    }
+    } */
 
     addMobiusStrip(mobiusStrip, vertices, indices);
-    addMobiusStrip(mobiusStrip, reversedVertices, reversedIndices);
+    //addMobiusStrip(mobiusStrip, reversedVertices, reversedIndices);
 
     scene.add(mobiusStrip);
-}
-
-//////////////////////
-/* CHECK COLLISIONS */
-//////////////////////
-function checkCollisions(){
-    'use strict';
-
-}
-
-///////////////////////
-/* HANDLE COLLISIONS */
-///////////////////////
-function handleCollisions(){
-    'use strict';
-
 }
 
 ////////////
@@ -745,14 +678,11 @@ function onKeyDown(e) {
         break;
     case 84: //T
     case 116: //t
-        ambientLight.visible = !ambientLight.visible;
-        directionalGlobalLight.visible = !directionalGlobalLight.visible;
-        /* spotLights.forEach(light => {
-            light.visible = !light.visible;
-        }); */
-        /* mobiusPointLights.forEach(light => {
-            light.visible = !light.visible;
-        }); */
+        toCalcLights = !toCalcLights;
+        ambientLight.visible = toCalcLights;
+        directionalGlobalLight.visible = toCalcLights;
+        spotLights.forEach(light => { light.visible = toCalcLights; });
+        mobiusPointLights.forEach(light => { light.visible = toCalcLights; });
         break;
     }
 }
