@@ -11,7 +11,7 @@ import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.j
 //////////////////////
 var scene, renderer, clock;
 
-var top_camera, stereoCamera, shown_camera;
+var top_camera, stereoCamera, vr_camera, shown_camera;
 
 var current_material_index;
 var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
@@ -124,9 +124,16 @@ function createStereoCamera() {
 }
 
 function updateStereoCamera() {
-    if (stereoCamera && top_camera) {
-        stereoCamera.update(top_camera);
+    if (stereoCamera && vr_camera) {
+        stereoCamera.update(vr_camera);
     }
+}
+
+function createVrCamera () {
+    'use strict';
+    vr_camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    vr_camera.position.set(8, 1, 8);
+    //vr_camera.lookAt(8, 1, 8);
 }
 
 ////////////////////////
@@ -783,9 +790,11 @@ function updateMaterials() {
 function render() {
     'use strict';
 
+    renderer.render(scene, shown_camera);
+
     updateStereoCamera();  // Update stereo camera every frame based on the top camera's current state
 
-    if (shown_camera === stereoCamera) {
+    /* if (shown_camera === stereoCamera) {
         renderer.clear();
 
         // Render the left eye view
@@ -804,7 +813,7 @@ function render() {
         renderer.setScissorTest(false); // Disable scissor test
         renderer.setViewport(0, 0, window.innerWidth, window.innerHeight); // Use the full viewport
         renderer.render(scene, shown_camera);
-    }
+    } */
 }
 
 ////////////////////////////////
@@ -827,9 +836,11 @@ function init() {
 
     createScene();
     createTopCamera();
+    createVrCamera();
     createStereoCamera();
+    
 
-    shown_camera = top_camera;
+    shown_camera = vr_camera;
     
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
@@ -885,7 +896,7 @@ function onKeyDown(e) {
         isAnimatingOuterRing = !isAnimatingOuterRing;
         break;
     case 52: //4
-        shown_camera = stereoCamera;
+        shown_camera = vr_camera;
         break;
     case 53: //5
         shown_camera = top_camera;
