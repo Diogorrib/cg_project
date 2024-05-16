@@ -5,30 +5,73 @@ import * as Stats from 'three/addons/libs/stats.module.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
-import { ParametricGeometries } from 'three/addons/geometries/ParametricGeometries.js';
 
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
 var scene, renderer, clock;
 
-var front_camera, lat_camera, top_camera, 
-    fixed_ort_camera, fixed_persp_camera, shown_camera;
+var top_camera, stereoCamera, shown_camera;
 
-var current_material;
-var material_lambert = new THREE.MeshLambertMaterial({ color: 0x503C3C, side: THREE.DoubleSide }); // DOUBLE SIDE NEEDED?
-var material_phong = new THREE.MeshPhongMaterial({ color: 0x503C3C, side: THREE.DoubleSide });  // DOUBLE SIDE NEEDED?
-var material_toon = new THREE.MeshToonMaterial({ color: 0x503C3C, side: THREE.DoubleSide });    // DOUBLE SIDE NEEDED?
-var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });              // DOUBLE SIDE NEEDED?
+var current_material_index;
+var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
 
-var scene_objects = [];
+var skydome_material_lambert = new THREE.MeshLambertMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+var skydome_material_phong = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+var skydome_material_toon = new THREE.MeshToonMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+var skydome_material_mesh = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, wireframe: true, side: THREE.DoubleSide });
+var current_skydome_materials = [skydome_material_lambert, skydome_material_phong, skydome_material_toon, 
+                                material_normal, skydome_material_mesh];
+
+var mobius_material_lambert = new THREE.MeshLambertMaterial({ color: 0x4b3832, side: THREE.DoubleSide });
+var mobius_material_phong = new THREE.MeshPhongMaterial({ color: 0x4b3832, side: THREE.DoubleSide });
+var mobius_material_toon = new THREE.MeshToonMaterial({ color: 0x4b3832, side: THREE.DoubleSide });
+var mobius_material_mesh = new THREE.MeshBasicMaterial({ color: 0x4b3832, wireframe: true, side: THREE.DoubleSide });
+var current_mobius_materials = [mobius_material_lambert, mobius_material_phong, mobius_material_toon,
+                               material_normal, mobius_material_mesh]
+
+var figure_material_lambert = new THREE.MeshLambertMaterial({ color: 0xccbea5, side: THREE.DoubleSide });
+var figure_material_phong = new THREE.MeshPhongMaterial({ color: 0xccbea5, side: THREE.DoubleSide });
+var figure_material_toon = new THREE.MeshToonMaterial({ color: 0xccbea5, side: THREE.DoubleSide });
+var figure_material_mesh = new THREE.MeshBasicMaterial({ color: 0xccbea5, wireframe: true, side: THREE.DoubleSide });
+var current_figure_materials = [figure_material_lambert, figure_material_phong, figure_material_toon,
+                               material_normal, figure_material_mesh];
+
+var cylinder_material_lambert = new THREE.MeshLambertMaterial({ color: 0x887d69, side: THREE.DoubleSide });
+var cylinder_material_phong = new THREE.MeshPhongMaterial({ color: 0x887d69, side: THREE.DoubleSide });
+var cylinder_material_toon = new THREE.MeshToonMaterial({ color: 0x887d69, side: THREE.DoubleSide });
+var cylinder_material_mesh = new THREE.MeshBasicMaterial({ color: 0x887d69, wireframe: true, side: THREE.DoubleSide });
+var current_cylinder_materials = [cylinder_material_lambert, cylinder_material_phong, cylinder_material_toon,
+                                 material_normal, cylinder_material_mesh];
+
+var inner_ring_material_lambert = new THREE.MeshLambertMaterial({ color: 0xaa9b82, side: THREE.DoubleSide });
+var inner_ring_material_phong = new THREE.MeshPhongMaterial({ color: 0xaa9b82, side: THREE.DoubleSide });
+var inner_ring_material_toon = new THREE.MeshToonMaterial({ color: 0xaa9b82, side: THREE.DoubleSide });
+var inner_ring_material_mesh = new THREE.MeshBasicMaterial({ color: 0xaa9b82, wireframe: true, side: THREE.DoubleSide });
+var current_inner_ring_materials = [inner_ring_material_lambert, inner_ring_material_phong, inner_ring_material_toon,
+                                   material_normal, inner_ring_material_mesh];
+
+var middle_ring_material_lambert = new THREE.MeshLambertMaterial({ color: 0xb4a68f, side: THREE.DoubleSide });
+var middle_ring_material_phong = new THREE.MeshPhongMaterial({ color: 0xb4a68f, side: THREE.DoubleSide });
+var middle_ring_material_toon = new THREE.MeshToonMaterial({ color: 0xb4a68f, side: THREE.DoubleSide });
+var middle_ring_material_mesh = new THREE.MeshBasicMaterial({ color: 0xb4a68f, wireframe: true, side: THREE.DoubleSide });
+var current_middle_ring_materials = [middle_ring_material_lambert, middle_ring_material_phong, middle_ring_material_toon,
+                                    material_normal, middle_ring_material_mesh];
+
+var outer_ring_material_lambert = new THREE.MeshLambertMaterial({ color: 0xdbd2c3, side: THREE.DoubleSide });
+var outer_ring_material_phong = new THREE.MeshPhongMaterial({ color: 0xdbd2c3, side: THREE.DoubleSide });
+var outer_ring_material_toon = new THREE.MeshToonMaterial({ color: 0xdbd2c3, side: THREE.DoubleSide });
+var outer_ring_material_mesh = new THREE.MeshBasicMaterial({ color: 0xdbd2c3, wireframe: true, side: THREE.DoubleSide });
+var current_outer_ring_materials = [outer_ring_material_lambert, outer_ring_material_phong, outer_ring_material_toon,
+                                   material_normal, outer_ring_material_mesh];
+
 var figures = [];
 var geometries = [];
 
 var ambientLight, directionalGlobalLight, spotLights = [], mobiusPointLights = [];
-var toCalcLights = true;
 
-var carousel, innerGroup, middleGroup, outerGroup, skyDome;
+var carousel, innerGroup, middleGroup, outerGroup;
+var skyDome, cylinder, inner_ring, middle_ring, outer_ring, mobiusMesh;
 
 /* Relevant size values for axis and position of elements */
 var cylinder_height = 20, cylinder_radius = 5;
@@ -36,7 +79,7 @@ var ring_height = 1;
 var inner_ring_inner_radius = 5, inner_ring_outer_radius = 10;
 var middle_ring_inner_radius = 10, middle_ring_outer_radius = 15;
 var outer_ring_inner_radius = 15, outer_ring_outer_radius = 20;
-var sky_dome_radius = 50;
+var sky_dome_radius = 100;
 
 var isAnimatingInnerRing = false;
 var isAnimatingMiddleRing = false;
@@ -53,78 +96,37 @@ function createScene(){
 
     scene = new THREE.Scene();
 
-    scene.add(new THREE.AxesHelper(35));
-
     createCarousel(0,0,0);
-    //createSkyDome(0,0,0);
+    createSkyDome(0,0,0);
     createMobius(0, 15, 0);
 
     createAmbientLight();
     createGlobalLight();
-
-    innerGroup.add(new THREE.AxesHelper(35));
-    middleGroup.add(new THREE.AxesHelper(35));
-    outerGroup.add(new THREE.AxesHelper(35));
 }
 
 ////////////////////////
 /* __CREATE__CAMERA__ */
 ////////////////////////
-function createFrontCamera() {
-    'use strict';
-    front_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
-                                                window.innerWidth / 20,
-                                                window.innerHeight / 20,
-                                                -window.innerHeight / 20);
-    front_camera.position.set(0, 0, 100);
-    front_camera.lookAt(scene.position);
-}
-
-function createLatCamera() {
-    'use strict';
-    lat_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
-                                              window.innerWidth / 20,
-                                              window.innerHeight / 20,
-                                              -window.innerHeight / 20);
-    lat_camera.position.set(100, 0, 0);
-    lat_camera.lookAt(scene.position);
-}
-
 function createTopCamera() {
     'use strict';
-    top_camera = new THREE.OrthographicCamera(-window.innerWidth / 30,
-                                              window.innerWidth / 30,
-                                              window.innerHeight / 30,
-                                              -window.innerHeight / 30);
-    top_camera.position.set(0,  100, 0);
+    top_camera = new THREE.PerspectiveCamera(34,
+        (window.innerWidth / window.innerHeight));
+        
+    top_camera.position.set(0, 80, 0);
     top_camera.lookAt(scene.position);
 }
 
-function createFixedOrthographicCamera() {
+function createStereoCamera() {
     'use strict';
-    fixed_ort_camera = new THREE.OrthographicCamera(-window.innerWidth / 20,
-                                                    window.innerWidth / 20,
-                                                    window.innerHeight / 20,
-                                                    -window.innerHeight / 20);
-    fixed_ort_camera.position.set(20, 30, 20);
-    fixed_ort_camera.lookAt(scene.position);
+    stereoCamera = new THREE.StereoCamera();
+    stereoCamera.aspect = 0.5;
+    updateStereoCamera();  // Ensure the stereo camera is updated immediately after creation
 }
 
-function createFixedPerspectiveCamera() {
-    'use strict';
-    fixed_persp_camera = new THREE.PerspectiveCamera(34,
-                            (window.innerWidth / window.innerHeight));
-    fixed_persp_camera.position.set(60, 60, 50);
-    fixed_persp_camera.lookAt(scene.position);
-}
-
-function createAllCameras() {
-    'use strict';
-    createFrontCamera();
-    createLatCamera();
-    createTopCamera();
-    createFixedOrthographicCamera();
-    createFixedPerspectiveCamera();
+function updateStereoCamera() {
+    if (stereoCamera && top_camera) {
+        stereoCamera.update(top_camera);
+    }
 }
 
 ////////////////////////
@@ -143,23 +145,17 @@ function createGlobalLight() {
     directionalGlobalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalGlobalLight.position.set(100, 100, 100);
     scene.add(directionalGlobalLight);
-
-    // Helper to visualize the light
-    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalGlobalLight, 5);
-    scene.add(directionalLightHelper);
 }
 
 function createSpotLight(obj, mesh) {
     'use strict';
 
-    var spotLight = new THREE.SpotLight(0xffffff, 100, 3, Math.PI/3);
+    var spotLight = new THREE.SpotLight(0xffffff, 100, 5, Math.PI/4);
     spotLight.position.set(mesh.position.x, mesh.position.y-0.1, mesh.position.z);
     spotLight.target = mesh;
 
     spotLights.push(spotLight);
 
-    //const SpotLightHelper = new THREE.SpotLightHelper(spotLight, 2);
-    //obj.add(SpotLightHelper);
     obj.add(spotLight.target);
     obj.add(spotLight);
 }
@@ -186,10 +182,9 @@ function addCylinder(obj, x, y, z) {
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    var mesh = new THREE.Mesh(geometry, current_material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-    scene_objects.push(mesh);
+    cylinder = new THREE.Mesh(geometry, cylinder_material_lambert);
+    cylinder.position.set(x, y, z);
+    obj.add(cylinder);
 }
 
 ///////////////
@@ -232,114 +227,104 @@ function addRingAux(innerRadius, outerRadius, color) {
 function addInnerRing(obj) {
     'use strict';
 
-    var ring = addRingAux(inner_ring_inner_radius, inner_ring_outer_radius, 
-                current_material);
+    inner_ring = addRingAux(inner_ring_inner_radius, inner_ring_outer_radius, 
+                inner_ring_material_lambert);
 
-    obj.add(ring);
-    scene_objects.push(ring);
+    obj.add(inner_ring);
 }
 
 function addMiddleRing(obj) {
     'use strict';
 
-    var ring = addRingAux(middle_ring_inner_radius, middle_ring_outer_radius, 
-                current_material);
+    middle_ring = addRingAux(middle_ring_inner_radius, middle_ring_outer_radius, 
+                    middle_ring_material_lambert);
     
-    obj.add(ring);
-    scene_objects.push(ring);
+    obj.add(middle_ring);
 }
 
 function addOuterRing(obj) {
     'use strict';
     
-    var ring = addRingAux(outer_ring_inner_radius, outer_ring_outer_radius, 
-                current_material);
+    outer_ring = addRingAux(outer_ring_inner_radius, outer_ring_outer_radius, 
+                    outer_ring_material_lambert);
 
-    obj.add(ring);
-    scene_objects.push(ring);
+    obj.add(outer_ring);
 }
 
-/////////////////
-/* __FIGURES__ */
-/////////////////
+////////////////////////////
+/* __FIGURES__FUNCTIONS__ */
+////////////////////////////
 var hyperboloidOneSheet = function (u, v, target) {
     'use strict';
-
     const a = 1;
     const b = 1;
     const c = 1;
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = 2 * (v - 0.5);  // v goes from -1 to 1
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = 2 * (v - 0.5);  // -1 to 1
 
-    // Calculate parametric coordinates
     const x = a * Math.cosh(v) * Math.cos(u);
     const y = c * Math.sinh(v);
     const z = b * Math.cosh(v) * Math.sin(u);
 
-    target.set(x, y + ring_height/2 + Math.sinh(1), z);
+    target.set(x, y + 3, z);
 }
 
 var hyperboloidTwoSheets = function (u, v, target) {
     'use strict';
-
     const a = 1.5;
     const b = 1.5;
     const c = 4;
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = 2 * (v - 0.5);  // v goes from -1 to 1
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = 2 * (v - 0.5);  // -1 to 1
 
-    // Calculate parametric coordinates
     const x = a * Math.sinh(v) * Math.cos(u);
     const y = c * Math.cosh(v);
     const z = b * Math.sinh(v) * Math.sin(u);
 
-    target.set(x, y + ring_height/2 - Math.cosh(2), z);
+    target.set(x, y - 2.5, z);
 }
 
 var torus = function (u, v, target) {
     'use strict';
+    const R = 1.5;
+    const r = 0.5;
 
-    const R = 1.5; // Bigger radius
-    const r = 0.5; // Smaller radius
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = 2 * Math.PI * v; // 0 to 2pi
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = 2 * Math.PI * v; // v goes from 0 to 2π
-
-    // Calculate parametric coordinates
     const x = (R + r * Math.cos(v)) * Math.cos(u);
     const y = (R + r * Math.cos(v)) * Math.sin(u);
     const z = r * Math.sin(v);
 
-    target.set(x, y+3, z);
+    target.set(x, y + 3, z);
 }
 
 var torusKnot = function (u, v, target) {
     'use strict';
+    const R = 2;
+    const r = 0.5;
+    const p = 5; // nr of Turns Around Torus Axis
+    const q = 2; // nr of Turns Around the Tube
 
-    const R = 2; // Bigger radius
-    const r = 0.5; // Smaller radius
-    const p = 5; // Number of Turns Around Torus Axis
-    const q = 2; // Number of Turns Around the Tube
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = 2 * Math.PI * v; // 0 to 2pi
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = 2 * Math.PI * v; // v goes from 0 to 2π
-
-    // Calculate parametric coordinates
     const x = (R + r * Math.cos(q * u) * Math.cos(v)) * Math.cos(p * u);
     const y = (R + r * Math.cos(q * u) * Math.cos(v)) * Math.sin(p * u);
     const z = r * Math.sin(q * u) * Math.sin(v);
 
-    target.set(x, y + 2, z); // Adjust y for vertical offset
+    target.set(x, y + 3, z);
 }
 
 var klein = function (u, v, target) {
+    'use strict';
     const R = 1.1; // Main radius
     const r = 0.7; // Tube radius
 
-    u = u * 2 * Math.PI; // u ranges from 0 to 2π
-    v = v * 2 * Math.PI; // v ranges from 0 to 2π
+    u = u * 2 * Math.PI; // 0 to 2pi
+    v = v * 2 * Math.PI; // 0 to 2pi
 
     const x = (R + r * Math.cos(u / 2) * Math.sin(v) - r * Math.sin(u / 2) * Math.sin(2 * v)) * Math.cos(u);
     const y = r * Math.sin(u / 2) * Math.sin(v) + r * Math.cos(u / 2) * Math.sin(2 * v);
@@ -350,15 +335,13 @@ var klein = function (u, v, target) {
 
 var ellipsoid = function (u, v, target) {
     'use strict';
-
     const a = 1.5;
     const b = 1;
     const c = 0.5;
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = Math.PI * (v - 0.5); // v goes from -π/2 to π/2
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = Math.PI * (v - 0.5); // -pi/2 to pi/2
 
-    // Calculate parametric coordinates
     const x = a * Math.cos(v) * Math.cos(u);
     const y = c * Math.sin(v);
     const z = b * Math.cos(v) * Math.sin(u);
@@ -368,68 +351,57 @@ var ellipsoid = function (u, v, target) {
 
 var helicoid = function (u, v, target) {
     'use strict';
-
     const a = 1.5;
     const height = 2.5;
-    u = 2.5 * Math.PI * u; // u vai de 0 a 4π
-    v = 2 * (v - 0.5); // v vai de -1 a 1
 
-    // Calcular as coordenadas paramétricas
+    u = 2.5 * Math.PI * u; // 0 to 4pi
+    v = 2 * (v - 0.5); // -1 to 1
+
     const x = a * v * Math.cos(u);
     const y = height * u / (2 * Math.PI);
     const z = a * v * Math.sin(u);
 
-    target.set(x, y + ring_height/2, z);
+    target.set(x, y + 1.5, z);
 }
 
 var fourLeafClover = function (u, v, target) {
     'use strict';
-
     const a = 1.5;
 
-    u = 2 * Math.PI * u; // u vai de 0 a 2π
-    v = 0.5 * (v - 0.5); // v vai de -1 a 1
+    u = 2 * Math.PI * u; // 0 to 2pi
+    v = 0.5 * (v - 0.5); // -1 to 1
 
-    // Calcular as coordenadas paramétricas
     const x = a * Math.cos(2 * u) * Math.cos(u);
     const y = a * Math.cos(2 * u) * Math.sin(u);
-    const z = v * a;
+    const z = a * v;
 
-    target.set(x, y + ring_height/2 + 2, z);
+    target.set(x, y + 3, z);
 }
 
+/////////////////
+/* __FIGURES__ */
+/////////////////
 function createParametricGeometries() {
     'use strict';
 
-    var parametricFigures = [hyperboloidOneSheet, hyperboloidTwoSheets, torus, klein, ellipsoid, helicoid, torusKnot, fourLeafClover];
-        /* [hyperboloidOneSheet, hyperboloidTwoSheets, torus, klein, ellipsoid, helicoid, torusKnot, fourLeafClover],
-                             [torus, ellipsoid, hyperboloidTwoSheets, fourLeafClover, helicoid, torusKnot, hyperboloidOneSheet, klein],
-                             [klein, fourLeafClover, helicoid, torus, hyperboloidOneSheet, torusKnot, hyperboloidTwoSheets, ellipsoid]]; */
+    var parametricFigures = [hyperboloidOneSheet, hyperboloidTwoSheets, torus, klein,
+                                ellipsoid, helicoid, torusKnot, fourLeafClover];
 
     parametricFigures.forEach(figure => {
         geometries.push(new ParametricGeometry(figure, 20, 20));
     });
-    /* var j, k = 0;
-    for(var i = 0; i < 24; i++) {
-        k = i%8;
-        geometries.push(new ParametricGeometry(parametricFigures[j][k], 20, 20));
-        if(i%8 == 0) {
-            j++;
-        }
-    } */
-}
+} 
 
 function createFigure(obj, geometry, radius, angle) {
     'use strict';
 
-    var mesh = new THREE.Mesh(geometry, current_material);
+    var mesh = new THREE.Mesh(geometry, figure_material_lambert);
     mesh.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
 
     createSpotLight(obj, mesh);
 
     obj.add(mesh);
     figures.push(mesh);
-    scene_objects.push(mesh);
 }
 
 ///////////////////////
@@ -460,9 +432,9 @@ function createMiddleGroup(obj, x, y, z) {
     middleGroup.position.set(x, y, z);
 
     addMiddleRing(middleGroup);
-    for(var i = 0; i < 8; i--) {
+    for(var i = 0; i < 8; i++) {
         createFigure(middleGroup,
-               geometries[i],
+               geometries[7-i],
                middle_ring_inner_radius + (middle_ring_outer_radius - middle_ring_inner_radius)/2, 
                (Math.PI/4)*i);
     }
@@ -508,11 +480,10 @@ function createCarousel(x, y, z) {
 function createSkyDome(x, y, z) {
     'use strict';
 
-    const geometry = new THREE.SphereGeometry(sky_dome_radius, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    skyDome = new THREE.Mesh(geometry, current_material);
+    const geometry = new THREE.SphereGeometry(sky_dome_radius, 32, 32, 0, Math.PI * 2, 0, Math.PI);
+    skyDome = new THREE.Mesh(geometry, skydome_material_lambert);
     skyDome.position.set(x, y - cylinder_height / 2, z);
     scene.add(skyDome);
-    scene_objects.push(skyDome);
 }
 
 ////////////////
@@ -521,50 +492,192 @@ function createSkyDome(x, y, z) {
 function generateMobiusVertices(obj, vertices, indices) {
     'use strict';
 
-    const numSegments = 80; // Number of segments for a smoother curve
-    const radius = 10;       // Radius of the strip's central circle
-    const width = 2;         // Width of the strip
+    const r = 10;       // Radius of the strip's central circle
+    const w = 2;         // Width of the strip
 
-    var placelights = [];
-    for (var i = 0; i < 8; i++) {
-        placelights.push((i/8)*numSegments);
-    }
+    var theta = (0/8) * 2 * Math.PI;
+    var phi = theta / 2;
+    var costheta = r * Math.cos(theta);
+    var sintheta = r * Math.sin(theta);
+    var costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    var sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    var sinphi = w * Math.sin(phi);
 
-    // Generate vertices and indices for the Möbius strip
-    for (var i = 0; i <= numSegments; i++) {
-        const theta = (i / numSegments) * 2 * Math.PI; // theta goes from 0 to 2PI
-        
-        [-1, 1].forEach(j => { // j flips between -1 and 1 for the two sides of the strip
-            const phi = theta / 2; // Half twist distributed over the entire loop
+    const v1 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v2 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+    
+    var mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v1[0] + v2[0])/2, (v1[1] + v2[1])/2, (v1[2] + v2[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
 
-            const x = radius * Math.cos(theta) + j * width * Math.cos(theta) * Math.cos(phi);
-            const y = radius * Math.sin(theta) + j * width * Math.sin(theta) * Math.cos(phi);
-            const z = j * width * Math.sin(phi);
-            vertices.push(x, y, z);
-        });
+    theta = (1/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
 
-        if (placelights.includes(i)) {
-            var mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
-            mobiusPointLight.position.set(radius * Math.cos(theta), radius * Math.sin(theta), 0);
-            obj.add(mobiusPointLight);
-            mobiusPointLights.push(mobiusPointLight);
+    const v3 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v4 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+    
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v3[0] + v4[0])/2, (v3[1] + v4[1])/2, (v3[2] + v4[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
 
-            var pointLightHelper = new THREE.PointLightHelper(mobiusPointLight, 1);
-            scene.add(pointLightHelper);
-        }
+    vertices.push(v1[0], v1[1], v1[2]);
+    vertices.push(v2[0], v2[1], v2[2]);
+    vertices.push(v3[0], v3[1], v3[2]);
+    vertices.push(v2[0], v2[1], v2[2]);
+    vertices.push(v4[0], v4[1], v4[2]);
+    vertices.push(v3[0], v3[1], v3[2]);
 
-        // Defining two triangles per segment
-        if (i > 0) {
-            const a = 2 * i - 2;  // vertex index at start of this segment
-            const b = 2 * i - 1;  // vertex index at start of other side of this segment
-            const c = 2 * i;      // vertex index at end of this segment
-            const d = 2 * i + 1;  // vertex index at end of other side of this segment
-            indices.push(a, b, c, b, d, c); // two triangles per segment
-        }
-    }
+    theta = (2/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
 
-    // Connecting the last segment to the first to create a true Möbius strip
-    indices.push(0, 1, 2 * numSegments, 1, 2 * numSegments + 1, 2 * numSegments);
+    const v5 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v6 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+    
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v5[0] + v6[0])/2, (v5[1] + v6[1])/2, (v5[2] + v6[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+
+    vertices.push(v3[0], v3[1], v3[2]);
+    vertices.push(v4[0], v4[1], v4[2]);
+    vertices.push(v5[0], v5[1], v5[2]);
+    vertices.push(v4[0], v4[1], v4[2]);
+    vertices.push(v6[0], v6[1], v6[2]);
+    vertices.push(v5[0], v5[1], v5[2]);
+
+    theta = (3/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
+
+    const v7 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v8 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v7[0] + v8[0])/2, (v7[1] + v8[1])/2, (v7[2] + v8[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+
+    vertices.push(v5[0], v5[1], v5[2]);
+    vertices.push(v6[0], v6[1], v6[2]);
+    vertices.push(v7[0], v7[1], v7[2]);
+    vertices.push(v6[0], v6[1], v6[2]);
+    vertices.push(v8[0], v8[1], v8[2]);
+    vertices.push(v7[0], v7[1], v7[2]);
+
+    theta = (4/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
+
+    const v9 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v10 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v9[0] + v10[0])/2, (v9[1] + v10[1])/2, (v9[2] + v10[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+
+    vertices.push(v7[0], v7[1], v7[2]);
+    vertices.push(v8[0], v8[1], v8[2]);
+    vertices.push(v9[0], v9[1], v9[2]);
+    vertices.push(v8[0], v8[1], v8[2]);
+    vertices.push(v10[0], v10[1], v10[2]);
+    vertices.push(v9[0], v9[1], v9[2]);
+
+    theta = (5/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
+
+    const v11 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v12 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v11[0] + v12[0])/2, (v11[1] + v12[1])/2, (v11[2] + v12[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+
+    vertices.push(v9[0], v9[1], v9[2]);
+    vertices.push(v10[0], v10[1], v10[2]);
+    vertices.push(v11[0], v11[1], v11[2]);
+    vertices.push(v10[0], v10[1], v10[2]);
+    vertices.push(v12[0], v12[1], v12[2]);
+    vertices.push(v11[0], v11[1], v11[2]);
+
+    theta = (6/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
+
+    const v13 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v14 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v13[0] + v14[0])/2, (v13[1] + v14[1])/2, (v13[2] + v14[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+
+    vertices.push(v11[0], v11[1], v11[2]);
+    vertices.push(v12[0], v12[1], v12[2]);
+    vertices.push(v13[0], v13[1], v13[2]);
+    vertices.push(v12[0], v12[1], v12[2]);
+    vertices.push(v14[0], v14[1], v14[2]);
+    vertices.push(v13[0], v13[1], v13[2]);
+
+    theta = (7/8) * 2 * Math.PI;
+    phi = theta / 2;
+    costheta = r * Math.cos(theta);
+    sintheta = r * Math.sin(theta);
+    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+    sinphi = w * Math.sin(phi);
+
+    const v15 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+    const v16 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+    
+    mobiusPointLight = new THREE.PointLight(0xffffff, 100, 5);
+    mobiusPointLight.position.set((v15[0] + v16[0])/2, (v15[1] + v16[1])/2, (v15[2] + v16[2])/2);
+    obj.add(mobiusPointLight);
+    mobiusPointLights.push(mobiusPointLight);
+    
+    vertices.push(v13[0], v13[1], v13[2]);
+    vertices.push(v14[0], v14[1], v14[2]);
+    vertices.push(v15[0], v15[1], v15[2]);
+    vertices.push(v14[0], v14[1], v14[2]);
+    vertices.push(v16[0], v16[1], v16[2]);
+    vertices.push(v15[0], v15[1], v15[2]);
+
+    vertices.push(v15[0], v15[1], v15[2]);
+    vertices.push(v16[0], v16[1], v16[2]);
+    vertices.push(v1[0], v1[1], v1[2]);
+    vertices.push(v16[0], v16[1], v16[2]);
+    vertices.push(v2[0], v2[1], v2[2]);
+    vertices.push(v1[0], v1[1], v1[2]);
 }
 
 function addMobiusStrip(obj, vertices, indices) {
@@ -572,21 +685,20 @@ function addMobiusStrip(obj, vertices, indices) {
 
     var geometry = new THREE.BufferGeometry();
 
-    geometry.setIndex(indices);
+    //geometry.setIndex(indices);
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
 
-    var mobiusMesh = new THREE.Mesh(geometry, current_material);
+    mobiusMesh = new THREE.Mesh(geometry, mobius_material_lambert);
 
     obj.add(mobiusMesh);
-    scene_objects.push(mobiusMesh);
 }
 
 function createMobius(x, y, z) {
     'use strict';
 
-    var vertices = [], reversedVertices = [];
-    var indices = [], reversedIndices = [];
+    var vertices = [];
+    var indices = [];
 
     var mobiusStrip = new THREE.Object3D();
     mobiusStrip.position.set(x, y, z);
@@ -594,20 +706,7 @@ function createMobius(x, y, z) {
 
     generateMobiusVertices(mobiusStrip, vertices, indices);
 
-    /* for (var i = 0; i < vertices.length; i += 6) {
-        for (var j = 5; j >= 0; j--) {
-            reversedVertices.unshift(vertices[i+j]);
-        }
-    }
-    for (var i = 0; i < indices.length; i += 6) {
-        for (var j = 5; j >= 0; j--) {
-            reversedIndices.unshift(indices[i+j]);
-        }
-    } */
-
     addMobiusStrip(mobiusStrip, vertices, indices);
-    //addMobiusStrip(mobiusStrip, reversedVertices, reversedIndices);
-
     scene.add(mobiusStrip);
 }
 
@@ -667,9 +766,15 @@ function update(){
 function updateMaterials() {
     'use strict';
 
-    scene_objects.forEach(obj => {
-        obj.material = current_material;
+    figures.forEach(obj => {
+        obj.material = current_figure_materials[current_material_index];
     });
+    skyDome.material = current_skydome_materials[current_material_index];
+    mobiusMesh.material = current_mobius_materials[current_material_index];
+    inner_ring.material = current_inner_ring_materials[current_material_index];
+    middle_ring.material = current_middle_ring_materials[current_material_index];
+    outer_ring.material = current_outer_ring_materials[current_material_index];
+    cylinder.material = current_cylinder_materials[current_material_index];
 }
 
 /////////////
@@ -677,7 +782,29 @@ function updateMaterials() {
 /////////////
 function render() {
     'use strict';
-    renderer.render(scene, shown_camera);
+
+    updateStereoCamera();  // Update stereo camera every frame based on the top camera's current state
+
+    if (shown_camera === stereoCamera) {
+        renderer.clear();
+
+        // Render the left eye view
+        renderer.setScissorTest(true);
+        renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+        renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+        renderer.render(scene, stereoCamera.cameraL);
+
+        // Render the right eye view
+        renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+        renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+        renderer.render(scene, stereoCamera.cameraR);
+
+    } else {
+        // Render with the full viewport when not using stereo camera
+        renderer.setScissorTest(false); // Disable scissor test
+        renderer.setViewport(0, 0, window.innerWidth, window.innerHeight); // Use the full viewport
+        renderer.render(scene, shown_camera);
+    }
 }
 
 ////////////////////////////////
@@ -691,16 +818,24 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    current_material = material_lambert;
+    // Enable VR
+    renderer.xr.enabled = true;
+    document.body.appendChild(VRButton.createButton(renderer));
+
+    current_material_index = 0;
     clock = new THREE.Clock(true);
 
     createScene();
-    createAllCameras();
+    createTopCamera();
+    createStereoCamera();
 
     shown_camera = top_camera;
     
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
+
+    // Use the VR-compatible animation loop
+    renderer.setAnimationLoop(animate);
 }
 
 /////////////////////
@@ -712,7 +847,7 @@ function animate() {
     update();
     render();
 
-    requestAnimationFrame(animate);
+    //requestAnimationFrame(animate);   // ASK?!
 }
 
 ////////////////////////////
@@ -728,33 +863,8 @@ function onResize() {
         // Update the size of the renderer
         renderer.setSize(window.innerWidth, window.innerHeight);
         
-        // Update the aspect ratio and size of each camera
-        front_camera.left = -window.innerWidth / 20;
-        front_camera.right = window.innerWidth / 20;
-        front_camera.top = window.innerHeight / 20;
-        front_camera.bottom = -window.innerHeight / 20;
-        front_camera.updateProjectionMatrix();
-        
-        lat_camera.left = -window.innerWidth / 20;
-        lat_camera.right = window.innerWidth / 20;
-        lat_camera.top = window.innerHeight / 20;
-        lat_camera.bottom = -window.innerHeight / 20;
-        lat_camera.updateProjectionMatrix();
-        
-        top_camera.left = -window.innerWidth / 30;
-        top_camera.right = window.innerWidth / 30;
-        top_camera.top = window.innerHeight / 30;
-        top_camera.bottom = -window.innerHeight / 30;
+        top_camera.aspect = window.innerWidth / window.innerHeight;
         top_camera.updateProjectionMatrix();
-        
-        fixed_ort_camera.left = -window.innerWidth / 20;
-        fixed_ort_camera.right = window.innerWidth / 20;
-        fixed_ort_camera.top = window.innerHeight / 20;
-        fixed_ort_camera.bottom = -window.innerHeight / 20;
-        fixed_ort_camera.updateProjectionMatrix();
-        
-        fixed_persp_camera.aspect = window.innerWidth / window.innerHeight;
-        fixed_persp_camera.updateProjectionMatrix();
     }
 }
 
@@ -775,10 +885,10 @@ function onKeyDown(e) {
         isAnimatingOuterRing = !isAnimatingOuterRing;
         break;
     case 52: //4
-        shown_camera = lat_camera;
+        shown_camera = stereoCamera;
         break;
     case 53: //5
-        shown_camera = fixed_persp_camera;
+        shown_camera = top_camera;
         break;
     case 68: //D
     case 100: //d
@@ -798,27 +908,33 @@ function onKeyDown(e) {
         break;
     case 81: //Q
     case 113: //q
-        current_material = material_lambert;
+        if (current_material_index != 4)
+            current_material_index = 0;
         break;
     case 87: //W
     case 119: //w
-        current_material = material_phong;
+        if (current_material_index != 4)
+            current_material_index = 1;
         break;
     case 69: //E
     case 101: //e
-        current_material = material_toon;
+        if (current_material_index != 4)
+            current_material_index = 2;
         break;
     case 82: //R
     case 114: //r
-        current_material = material_normal;
+        if (current_material_index != 4)
+            current_material_index = 3;
         break;
     case 84: //T
     case 116: //t
-        toCalcLights = !toCalcLights;
-        ambientLight.visible = toCalcLights;
-        directionalGlobalLight.visible = toCalcLights;
-        spotLights.forEach(light => { light.visible = toCalcLights; });
-        mobiusPointLights.forEach(light => { light.visible = toCalcLights; });
+        if (current_material_index != 4) {
+            current_material_index = 4;
+            scene_lights.forEach(light => { light.visible = false; });
+        } else {
+            current_material = material_lambert;    //default material
+            scene_lights.forEach(light => { light.visible = true; });
+        }
         break;
     }
 }
