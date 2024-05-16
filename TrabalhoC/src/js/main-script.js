@@ -153,13 +153,13 @@ function createSpotLight(obj, mesh) {
     'use strict';
 
     var spotLight = new THREE.SpotLight(0xffffff, 100, 3, Math.PI/3);
-    spotLight.position.set(mesh.position.x, mesh.position.y - 1, mesh.position.z);
+    spotLight.position.set(mesh.position.x, mesh.position.y-0.1, mesh.position.z);
     spotLight.target = mesh;
 
     spotLights.push(spotLight);
 
-    const SpotLightHelper = new THREE.SpotLightHelper(spotLight, 2);
-    obj.add(SpotLightHelper);
+    //const SpotLightHelper = new THREE.SpotLightHelper(spotLight, 2);
+    //obj.add(SpotLightHelper);
     obj.add(spotLight.target);
     obj.add(spotLight);
 }
@@ -262,32 +262,168 @@ function addOuterRing(obj) {
 /////////////////
 /* __FIGURES__ */
 /////////////////
-
 var hyperboloidOneSheet = function (u, v, target) {
     'use strict';
 
-    u = 2 * Math.PI * u; // u goes from 0 to 2π
-    v = 3 * (v - 0.5);  // v goes from -3 to 3, adjust range as needed for the height
-    const x = Math.cosh(v) * Math.cos(u);
-    const y = Math.cosh(v) * Math.sin(u);
-    const z = Math.sinh(v);
+    const a = 1;
+    const b = 1;
+    const c = 1;
 
-    target.set(x, y, z);
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = 2 * (v - 0.5);  // v goes from -1 to 1
+
+    // Calculate parametric coordinates
+    const x = a * Math.cosh(v) * Math.cos(u);
+    const y = c * Math.sinh(v);
+    const z = b * Math.cosh(v) * Math.sin(u);
+
+    target.set(x, y + ring_height/2 + Math.sinh(1), z);
+}
+
+var hyperboloidTwoSheets = function (u, v, target) {
+    'use strict';
+
+    const a = 1.5;
+    const b = 1.5;
+    const c = 4;
+
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = 2 * (v - 0.5);  // v goes from -1 to 1
+
+    // Calculate parametric coordinates
+    const x = a * Math.sinh(v) * Math.cos(u);
+    const y = c * Math.cosh(v);
+    const z = b * Math.sinh(v) * Math.sin(u);
+
+    target.set(x, y + ring_height/2 - Math.cosh(2), z);
+}
+
+var torus = function (u, v, target) {
+    'use strict';
+
+    const R = 1.5; // Bigger radius
+    const r = 0.5; // Smaller radius
+
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = 2 * Math.PI * v; // v goes from 0 to 2π
+
+    // Calculate parametric coordinates
+    const x = (R + r * Math.cos(v)) * Math.cos(u);
+    const y = (R + r * Math.cos(v)) * Math.sin(u);
+    const z = r * Math.sin(v);
+
+    target.set(x, y+3, z);
+}
+
+var torusKnot = function (u, v, target) {
+    'use strict';
+
+    const R = 2; // Bigger radius
+    const r = 0.5; // Smaller radius
+    const p = 5; // Number of Turns Around Torus Axis
+    const q = 2; // Number of Turns Around the Tube
+
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = 2 * Math.PI * v; // v goes from 0 to 2π
+
+    // Calculate parametric coordinates
+    const x = (R + r * Math.cos(q * u) * Math.cos(v)) * Math.cos(p * u);
+    const y = (R + r * Math.cos(q * u) * Math.cos(v)) * Math.sin(p * u);
+    const z = r * Math.sin(q * u) * Math.sin(v);
+
+    target.set(x, y + 2, z); // Adjust y for vertical offset
+}
+
+var klein = function (u, v, target) {
+    const R = 1.1; // Main radius
+    const r = 0.7; // Tube radius
+
+    u = u * 2 * Math.PI; // u ranges from 0 to 2π
+    v = v * 2 * Math.PI; // v ranges from 0 to 2π
+
+    const x = (R + r * Math.cos(u / 2) * Math.sin(v) - r * Math.sin(u / 2) * Math.sin(2 * v)) * Math.cos(u);
+    const y = r * Math.sin(u / 2) * Math.sin(v) + r * Math.cos(u / 2) * Math.sin(2 * v);
+    const z = (R + r * Math.cos(u / 2) * Math.sin(v) - r * Math.sin(u / 2) * Math.sin(2 * v)) * Math.sin(u);
+
+    target.set(x, y + 3, z);
+}
+
+var ellipsoid = function (u, v, target) {
+    'use strict';
+
+    const a = 1.5;
+    const b = 1;
+    const c = 0.5;
+
+    u = 2 * Math.PI * u; // u goes from 0 to 2π
+    v = Math.PI * (v - 0.5); // v goes from -π/2 to π/2
+
+    // Calculate parametric coordinates
+    const x = a * Math.cos(v) * Math.cos(u);
+    const y = c * Math.sin(v);
+    const z = b * Math.cos(v) * Math.sin(u);
+
+    target.set(x, y + 3, z);
+}
+
+var helicoid = function (u, v, target) {
+    'use strict';
+
+    const a = 1.5;
+    const height = 2.5;
+    u = 2.5 * Math.PI * u; // u vai de 0 a 4π
+    v = 2 * (v - 0.5); // v vai de -1 a 1
+
+    // Calcular as coordenadas paramétricas
+    const x = a * v * Math.cos(u);
+    const y = height * u / (2 * Math.PI);
+    const z = a * v * Math.sin(u);
+
+    target.set(x, y + ring_height/2, z);
+}
+
+var fourLeafClover = function (u, v, target) {
+    'use strict';
+
+    const a = 1.5;
+
+    u = 2 * Math.PI * u; // u vai de 0 a 2π
+    v = 0.5 * (v - 0.5); // v vai de -1 a 1
+
+    // Calcular as coordenadas paramétricas
+    const x = a * Math.cos(2 * u) * Math.cos(u);
+    const y = a * Math.cos(2 * u) * Math.sin(u);
+    const z = v * a;
+
+    target.set(x, y + ring_height/2 + 2, z);
 }
 
 function createParametricGeometries() {
     'use strict';
 
-    for (var i = 0; i < 8; i++) {
-        geometries.push(new ParametricGeometry(hyperboloidOneSheet, 10, 10));
-    }
+    var parametricFigures = [hyperboloidOneSheet, hyperboloidTwoSheets, torus, klein, ellipsoid, helicoid, torusKnot, fourLeafClover];
+        /* [hyperboloidOneSheet, hyperboloidTwoSheets, torus, klein, ellipsoid, helicoid, torusKnot, fourLeafClover],
+                             [torus, ellipsoid, hyperboloidTwoSheets, fourLeafClover, helicoid, torusKnot, hyperboloidOneSheet, klein],
+                             [klein, fourLeafClover, helicoid, torus, hyperboloidOneSheet, torusKnot, hyperboloidTwoSheets, ellipsoid]]; */
+
+    parametricFigures.forEach(figure => {
+        geometries.push(new ParametricGeometry(figure, 20, 20));
+    });
+    /* var j, k = 0;
+    for(var i = 0; i < 24; i++) {
+        k = i%8;
+        geometries.push(new ParametricGeometry(parametricFigures[j][k], 20, 20));
+        if(i%8 == 0) {
+            j++;
+        }
+    } */
 }
 
 function createFigure(obj, geometry, radius, angle) {
     'use strict';
 
     var mesh = new THREE.Mesh(geometry, current_material);
-    mesh.position.set(Math.cos(angle)*radius, 1, Math.sin(angle)*radius);
+    mesh.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
 
     createSpotLight(obj, mesh);
 
@@ -324,7 +460,7 @@ function createMiddleGroup(obj, x, y, z) {
     middleGroup.position.set(x, y, z);
 
     addMiddleRing(middleGroup);
-    for(var i = 0; i < 8; i++) {
+    for(var i = 0; i < 8; i--) {
         createFigure(middleGroup,
                geometries[i],
                middle_ring_inner_radius + (middle_ring_outer_radius - middle_ring_inner_radius)/2, 
