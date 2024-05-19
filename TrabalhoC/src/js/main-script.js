@@ -23,7 +23,7 @@ var inner_ring_materials = createMaterialsForObject(0xaa9b82);
 var middle_ring_materials = createMaterialsForObject(0xb4a68f);
 var outer_ring_materials = createMaterialsForObject(0xdbd2c3);
 
-var current_material_index;
+var current_material_index, old_material_index;
 
 var figures = [];
 var geometries = [];
@@ -475,166 +475,33 @@ function generateMobiusVertices(obj, vertices) {
 
     const r = 10;       // Radius of the strip's central circle
     const w = 2;        // Width of the strip
+    var prev1 = [r + w, 0, 0];
+    var prev2 = [r - w, 0, 0];
 
-    var theta = (0/8) * 2 * Math.PI;
-    var phi = theta / 2;
-    var costheta = r * Math.cos(theta);
-    var sintheta = r * Math.sin(theta);
-    var costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    var sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    var sinphi = w * Math.sin(phi);
+    for (var i = 1; i <= 8; i++) {
+        const theta = (i/8) * 2 * Math.PI;
+        const phi = theta / 2;
+        const costheta = r * Math.cos(theta);
+        const sintheta = r * Math.sin(theta);
+        const costhetaphi = w * Math.cos(theta) * Math.cos(phi);
+        const sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
+        const sinphi = w * Math.sin(phi);
 
-    const v1 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v2 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-    
-    createPointLight(obj, (v1[0] + v2[0])/2, (v1[1] + v2[1])/2, (v1[2] + v2[2])/2);
+        var v1 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
+        var v2 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
 
-    theta = (1/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
+        createPointLight(obj, (v1[0] + v2[0])/2, (v1[1] + v2[1])/2, (v1[2] + v2[2])/2);
 
-    const v3 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v4 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
+        vertices.push(prev1[0], prev1[1], prev1[2]);
+        vertices.push(prev2[0], prev2[1], prev2[2]);
+        vertices.push(v1[0], v1[1], v1[2]);
+        vertices.push(prev2[0], prev2[1], prev2[2]);
+        vertices.push(v2[0], v2[1], v2[2]);
+        vertices.push(v1[0], v1[1], v1[2]);
 
-    createPointLight(obj, (v3[0] + v4[0])/2, (v3[1] + v4[1])/2, (v3[2] + v4[2])/2);
-
-    vertices.push(v1[0], v1[1], v1[2]);
-    vertices.push(v2[0], v2[1], v2[2]);
-    vertices.push(v3[0], v3[1], v3[2]);
-    vertices.push(v2[0], v2[1], v2[2]);
-    vertices.push(v4[0], v4[1], v4[2]);
-    vertices.push(v3[0], v3[1], v3[2]);
-
-    theta = (2/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v5 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v6 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v5[0] + v6[0])/2, (v5[1] + v6[1])/2, (v5[2] + v6[2])/2);
-
-    vertices.push(v3[0], v3[1], v3[2]);
-    vertices.push(v4[0], v4[1], v4[2]);
-    vertices.push(v5[0], v5[1], v5[2]);
-    vertices.push(v4[0], v4[1], v4[2]);
-    vertices.push(v6[0], v6[1], v6[2]);
-    vertices.push(v5[0], v5[1], v5[2]);
-
-    theta = (3/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v7 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v8 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v7[0] + v8[0])/2, (v7[1] + v8[1])/2, (v7[2] + v8[2])/2);
-
-    vertices.push(v5[0], v5[1], v5[2]);
-    vertices.push(v6[0], v6[1], v6[2]);
-    vertices.push(v7[0], v7[1], v7[2]);
-    vertices.push(v6[0], v6[1], v6[2]);
-    vertices.push(v8[0], v8[1], v8[2]);
-    vertices.push(v7[0], v7[1], v7[2]);
-
-    theta = (4/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v9 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v10 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v9[0] + v10[0])/2, (v9[1] + v10[1])/2, (v9[2] + v10[2])/2);
-
-    vertices.push(v7[0], v7[1], v7[2]);
-    vertices.push(v8[0], v8[1], v8[2]);
-    vertices.push(v9[0], v9[1], v9[2]);
-    vertices.push(v8[0], v8[1], v8[2]);
-    vertices.push(v10[0], v10[1], v10[2]);
-    vertices.push(v9[0], v9[1], v9[2]);
-
-    theta = (5/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v11 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v12 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v11[0] + v12[0])/2, (v11[1] + v12[1])/2, (v11[2] + v12[2])/2);
-
-    vertices.push(v9[0], v9[1], v9[2]);
-    vertices.push(v10[0], v10[1], v10[2]);
-    vertices.push(v11[0], v11[1], v11[2]);
-    vertices.push(v10[0], v10[1], v10[2]);
-    vertices.push(v12[0], v12[1], v12[2]);
-    vertices.push(v11[0], v11[1], v11[2]);
-
-    theta = (6/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v13 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v14 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v13[0] + v14[0])/2, (v13[1] + v14[1])/2, (v13[2] + v14[2])/2);
-
-    vertices.push(v11[0], v11[1], v11[2]);
-    vertices.push(v12[0], v12[1], v12[2]);
-    vertices.push(v13[0], v13[1], v13[2]);
-    vertices.push(v12[0], v12[1], v12[2]);
-    vertices.push(v14[0], v14[1], v14[2]);
-    vertices.push(v13[0], v13[1], v13[2]);
-
-    theta = (7/8) * 2 * Math.PI;
-    phi = theta / 2;
-    costheta = r * Math.cos(theta);
-    sintheta = r * Math.sin(theta);
-    costhetaphi = w * Math.cos(theta) * Math.cos(phi);
-    sinthetaphi = w * Math.sin(theta) * Math.cos(phi);
-    sinphi = w * Math.sin(phi);
-
-    const v15 = [costheta + costhetaphi, sintheta + sinthetaphi, sinphi];
-    const v16 = [costheta - costhetaphi, sintheta - sinthetaphi, -sinphi];
-
-    createPointLight(obj, (v15[0] + v16[0])/2, (v15[1] + v16[1])/2, (v15[2] + v16[2])/2);
-    
-    vertices.push(v13[0], v13[1], v13[2]);
-    vertices.push(v14[0], v14[1], v14[2]);
-    vertices.push(v15[0], v15[1], v15[2]);
-    vertices.push(v14[0], v14[1], v14[2]);
-    vertices.push(v16[0], v16[1], v16[2]);
-    vertices.push(v15[0], v15[1], v15[2]);
-
-    vertices.push(v15[0], v15[1], v15[2]);
-    vertices.push(v16[0], v16[1], v16[2]);
-    vertices.push(v1[0], v1[1], v1[2]);
-    vertices.push(v16[0], v16[1], v16[2]);
-    vertices.push(v2[0], v2[1], v2[2]);
-    vertices.push(v1[0], v1[1], v1[2]);
+        prev1 = v1;
+        prev2 = v2;
+    }
 }
 
 function addMobiusStrip(obj, vertices) {
@@ -773,6 +640,7 @@ function init() {
     document.body.appendChild(VRButton.createButton(renderer));
 
     current_material_index = 0;
+    old_material_index = 0;
     clock = new THREE.Clock(true);
 
     createScene();
@@ -781,10 +649,10 @@ function init() {
 
     current_camera = top_camera;
 
-    /* // Move the camera arround the scene when not in VR
+    // Move the camera arround the scene when not in VR     //ASK?!
     var controls = new OrbitControls(top_camera, renderer.domElement);
     controls.enableDamping = true; // Optional, for smoother interaction
-    controls.dampingFactor = 0.1; */
+    controls.dampingFactor = 0.1;
 
     renderer.xr.addEventListener('sessionstart', () => {
         current_camera = stereo_camera;
@@ -885,10 +753,11 @@ function onKeyDown(e) {
     case 84: //T
     case 116: //t
         if (current_material_index != 4) {
+            old_material_index = current_material_index;
             current_material_index = 4;
             scene_lights.forEach(light => { light.visible = false; });
         } else {
-            current_material_index = 0;   //default material
+            current_material_index = old_material_index;
             scene_lights.forEach(light => { light.visible = true; });
         }
         break;
