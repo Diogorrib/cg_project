@@ -14,6 +14,7 @@ var scene, renderer, clock;
 var top_camera, vr_camera, stereo_camera, current_camera;
 
 // Arrays like lambert, phong, toon, normal, mesh
+var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
 var skydome_materials = createMaterialsForObject(0xffffff);
 var mobius_materials = createMaterialsForObject(0x4b3832);
 var figure_materials = createMaterialsForObject(0xccbea5);
@@ -22,7 +23,6 @@ var inner_ring_materials = createMaterialsForObject(0xaa9b82);
 var middle_ring_materials = createMaterialsForObject(0xb4a68f);
 var outer_ring_materials = createMaterialsForObject(0xdbd2c3);
 
-var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
 var current_material_index;
 
 var figures = [];
