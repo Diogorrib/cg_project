@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
-import * as Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 
 //////////////////////
@@ -13,9 +10,8 @@ var scene, renderer, clock;
 
 var top_camera, vr_camera, stereo_camera, current_camera;
 
-// Arrays like lambert, phong, toon, normal, mesh
 var material_normal = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
-var skydome_materials = createMaterialsForObject(0xffffff);
+var skydome_materials = createMaterialsForObject(0xffffff, true);
 var mobius_materials = createMaterialsForObject(0x4b3832);
 var figure_materials = createMaterialsForObject(0xccbea5);
 var cylinder_materials = createMaterialsForObject(0x887d69);
@@ -58,7 +54,7 @@ function createScene(){
 
     createCarousel(0,0,0);
     createSkyDome(0,0,0);
-    createMobius(0, 15, 0);
+    createMobius(0, 20, 0);
 
     createAmbientLight();
     createGlobalLight();
@@ -72,7 +68,7 @@ function createTopCamera() {
     top_camera = new THREE.PerspectiveCamera(34,
         (window.innerWidth / window.innerHeight));
         
-    top_camera.position.set(0, 80, 0);
+    top_camera.position.set(50, 50, 50);
     top_camera.lookAt(scene.position);
 }
 
@@ -131,16 +127,19 @@ function createPointLight(obj, x, y, z) {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
-// Arrays like lambert, phong, toon, normal, mesh
-function createMaterialsForObject(color) {
-    'use strict';
+function createMaterialsForObject(color, applyTexture=false) {
+
+    var texture = null;
+    if (applyTexture) {
+        texture = new THREE.TextureLoader().load('textures/texture.png');
+    }
 
     var materials = [];
-    materials.push(new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide }));
-    materials.push(new THREE.MeshPhongMaterial({ color: color, side: THREE.DoubleSide }));
-    materials.push(new THREE.MeshToonMaterial({ color: color, side: THREE.DoubleSide }));
+    materials.push(new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide, map: texture }));
+    materials.push(new THREE.MeshPhongMaterial({ color: color, side: THREE.DoubleSide, map: texture }));
+    materials.push(new THREE.MeshToonMaterial({ color: color, side: THREE.DoubleSide, map: texture}));
     materials.push(material_normal);
-    materials.push(new THREE.MeshBasicMaterial({ color: color, wireframe: false, side: THREE.DoubleSide }));
+    materials.push(new THREE.MeshBasicMaterial({ color: color, wireframe: false, side: THREE.DoubleSide, map: texture}));
 
     return materials;
 }
@@ -175,14 +174,11 @@ function addCylinder(obj, x, y, z) {
 function addRingAux(innerRadius, outerRadius, color) {
     'use strict';
 
-    // Define the shape of the ring
     var shape = new THREE.Shape();
 
-    // Draw the outer circle
     shape.moveTo(outerRadius, 0);
     shape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
 
-    // Draw the hole
     var holePath = new THREE.Path();
     holePath.moveTo(innerRadius, 0);
     holePath.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
@@ -198,7 +194,6 @@ function addRingAux(innerRadius, outerRadius, color) {
     var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     var ring = new THREE.Mesh(geometry, color);
 
-    // Rotate and position the ring
     ring.rotation.x = - Math.PI / 2;
     ring.position.set(0, - ring_height / 2, 0);
 
@@ -373,11 +368,13 @@ function createParametricGeometries() {
     });
 } 
 
-function createFigure(obj, geometry, radius, angle) {
+function createFigure(obj, geometry, radius, angle, size, rotationX) {
     'use strict';
 
     var mesh = new THREE.Mesh(geometry, figure_materials[0]);
     mesh.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
+    mesh.scale.set(size, size, size);
+    mesh.rotation.x = rotationX;
 
     createSpotLight(obj, mesh);
 
@@ -400,7 +397,7 @@ function createInnerGroup(obj, x, y, z) {
         createFigure(innerGroup,
                geometries[i],
                inner_ring_inner_radius + (inner_ring_outer_radius - inner_ring_inner_radius)/2, 
-               (Math.PI/4)*i);
+               (Math.PI/4)*i, 0.5, (Math.PI/8));
     }
 
    obj.add(innerGroup);
@@ -417,7 +414,7 @@ function createMiddleGroup(obj, x, y, z) {
         createFigure(middleGroup,
                geometries[7-i],
                middle_ring_inner_radius + (middle_ring_outer_radius - middle_ring_inner_radius)/2, 
-               (Math.PI/4)*i);
+               (Math.PI/4)*i, 0.8, (Math.PI/-8));
     }
 
    obj.add(middleGroup);
@@ -434,7 +431,7 @@ function createOuterGroup(obj, x, y, z) {
         createFigure(outerGroup,
                geometries[i],
                outer_ring_inner_radius + (outer_ring_outer_radius - outer_ring_inner_radius)/2, 
-               (Math.PI/4)*i);
+               (Math.PI/4)*i, 1, 0);
     }
 
    obj.add(outerGroup);
@@ -473,8 +470,7 @@ function createSkyDome(x, y, z) {
 function generateMobiusVertices(obj, vertices) {
     'use strict';
 
-    const r = 10;       // Radius of the strip's central circle
-    const w = 2;        // Width of the strip
+    const r = 10, w = 2;
     var prev1 = [r + w, 0, 0];
     var prev2 = [r - w, 0, 0];
 
@@ -625,7 +621,6 @@ function render() {
     }
 }
 
-
 ////////////////////////////////
 /* INITIALIZE ANIMATION CYCLE */
 ////////////////////////////////
@@ -649,18 +644,20 @@ function init() {
 
     current_camera = top_camera;
 
-    // Move the camera arround the scene when not in VR     //ASK?!
+    // Move the camera arround the scene when not in VR
     var controls = new OrbitControls(top_camera, renderer.domElement);
-    controls.enableDamping = true; // Optional, for smoother interaction
+    controls.enableDamping = true;
     controls.dampingFactor = 0.1;
 
     renderer.xr.addEventListener('sessionstart', () => {
         current_camera = stereo_camera;
-        scene.position.set(0, -cylinder_height/2, cylinder_radius);
+        scene.position.set(0, -cylinder_height/4, 0);
+        scene.scale.set(0.5, 0.5, 0.5);
     });
     renderer.xr.addEventListener('sessionend', () => {
         current_camera = top_camera;
         scene.position.set(0, 0, 0);
+        scene.scale.set(2, 2, 2);
     });
 
     window.addEventListener("keydown", onKeyDown);
@@ -677,8 +674,6 @@ function animate() {
 
     update();
     render();
-
-    //requestAnimationFrame(animate);   // ASK?!
 }
 
 ////////////////////////////
@@ -764,12 +759,4 @@ function onKeyDown(e) {
     }
 }
 
-///////////////////////
-/* KEY UP CALLBACK */
-///////////////////////
-function onKeyUp(e){
-    'use strict';
-}
-
 init();
-//animate(); //ASK?!
