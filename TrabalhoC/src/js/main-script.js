@@ -37,9 +37,9 @@ var middle_ring_inner_radius = 10, middle_ring_outer_radius = 15;
 var outer_ring_inner_radius = 15, outer_ring_outer_radius = 20;
 var sky_dome_radius = 100;
 
-var isAnimatingInnerRing = false;
-var isAnimatingMiddleRing = false;
-var isAnimatingOuterRing = false;
+var isAnimatingInnerRing = true;
+var isAnimatingMiddleRing = true;
+var isAnimatingOuterRing = true;
 var animationInnerDirection = 1;
 var animationMiddleDirection = 1;
 var animationOuterDirection = 1;
@@ -549,30 +549,33 @@ function update(){
     
     if (isAnimatingInnerRing) {
         // Move the inner ring up or down based on the animation direction
-        innerGroup.position.y += animationInnerDirection * scaledStep;
+        innerGroup.position.y += animationInnerDirection * scaledStep * 0.8;
 
         // Check if the inner ring has reached the top or bottom and reverse the direction
-        if (innerGroup.position.y >= cylinder_height / 2 - 2 || innerGroup.position.y <= - cylinder_height / 2 + 2) {
+        if ((innerGroup.position.y >= cylinder_height / 2 - 2 && animationInnerDirection == 1) ||
+            (innerGroup.position.y <= - cylinder_height / 2 + 2 && animationInnerDirection == -1)) {
             animationInnerDirection *= -1;
         }
     }
 
     if (isAnimatingMiddleRing) {
         // Move the inner ring up or down based on the animation direction
-        middleGroup.position.y += animationMiddleDirection * scaledStep;
+        middleGroup.position.y += animationMiddleDirection * scaledStep * 0.6;
 
         // Check if the inner ring has reached the top or bottom and reverse the direction
-        if (middleGroup.position.y >= cylinder_height / 2 - 2 || middleGroup.position.y <= - cylinder_height / 2 + 2) {
+        if ((middleGroup.position.y >= cylinder_height / 2 - 2 && animationMiddleDirection == 1) ||
+            (middleGroup.position.y <= - cylinder_height / 2 + 2 && animationMiddleDirection == -1)) {
             animationMiddleDirection *= -1;
         }
     }
 
     if (isAnimatingOuterRing) {
         // Move the inner ring up or down based on the animation direction
-        outerGroup.position.y += animationOuterDirection * scaledStep;
+        outerGroup.position.y += animationOuterDirection * scaledStep * 0.4;
 
         // Check if the inner ring has reached the top or bottom and reverse the direction
-        if (outerGroup.position.y >= cylinder_height / 2 - 2 || outerGroup.position.y <= - cylinder_height / 2 + 2) {
+        if ((outerGroup.position.y >= cylinder_height / 2 - 2 && animationOuterDirection == 1) ||
+            (outerGroup.position.y <= - cylinder_height / 2 + 2 && animationOuterDirection == -1)) {
             animationOuterDirection *= -1;
         }
     }
@@ -651,13 +654,13 @@ function init() {
 
     renderer.xr.addEventListener('sessionstart', () => {
         current_camera = stereo_camera;
-        scene.position.set(0, -cylinder_height/4, 0);
-        scene.scale.set(0.5, 0.5, 0.5);
+        scene.position.set(0, -cylinder_height/4-2, 0);
+        scene.scale.set(0.6, 0.6, 0.6);
     });
     renderer.xr.addEventListener('sessionend', () => {
         current_camera = top_camera;
         scene.position.set(0, 0, 0);
-        scene.scale.set(2, 2, 2);
+        scene.scale.set(1, 1, 1);
     });
 
     window.addEventListener("keydown", onKeyDown);
